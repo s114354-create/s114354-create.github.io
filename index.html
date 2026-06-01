@@ -2,196 +2,186 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>聊天養成</title>
+<title>心理測驗</title>
 
 <style>
 body {
   margin: 0;
+  background: #0d0d0d;
+  color: #eee;
   font-family: sans-serif;
-  background: #1e1e2f;
-  color: white;
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
+  transition: 0.5s;
 }
 
-.game {
-  width: 650px;
-  height: 420px;
-  background: #2a2a40;
-  border-radius: 15px;
-  display: flex;
+#app {
+  width: 90%;
+  max-width: 500px;
+  text-align: center;
 }
 
-/* 左側 */
-.left {
-  width: 30%;
-  background: #343456;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.name {
-  font-size: 18px;
-  margin-bottom: 10px;
-}
-
-.mood {
-  font-size: 14px;
-  opacity: 0.7;
-  margin-bottom: 10px;
-}
-
-.bar {
-  width: 80%;
-  height: 15px;
-  background: #555;
-  border-radius: 10px;
-}
-
-.fill {
-  height: 100%;
-  width: 50%;
-  background: pink;
-}
-
-/* 右側 */
-.right {
-  width: 70%;
-  display: flex;
-  flex-direction: column;
-}
-
-.messages {
-  flex: 1;
-  padding: 10px;
-  overflow-y: auto;
-}
-
-.msg {
-  margin: 5px 0;
-}
-
-.user {
-  text-align: right;
-  color: #9fe6ff;
-}
-
-.bot {
-  color: #ffb3d9;
-}
-
-/* 輸入 */
-.input-area {
-  display: flex;
-}
-
-input {
-  flex: 1;
-  padding: 10px;
-  border: none;
-  background: #222;
-  color: white;
+h2 {
+  min-height: 60px;
+  transition: 0.3s;
 }
 
 button {
-  width: 70px;
-  border: none;
-  background: #ff5fa2;
+  display: block;
+  width: 100%;
+  margin: 10px 0;
+  padding: 10px;
+  background: #1a1a1a;
   color: white;
+  border: 1px solid #444;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover {
+  transform: translateX(5px);
+  background: #333;
 }
 </style>
 </head>
 
 <body>
 
-<div class="game">
-
-  <!-- 左 -->
-  <div class="left">
-    <div class="name">傲嬌醬</div>
-    <div id="mood" class="mood">普通</div>
-
-    <div class="bar">
-      <div id="fill" class="fill"></div>
-    </div>
-    <div id="favorText">好感度 50</div>
-  </div>
-
-  <!-- 右 -->
-  <div class="right">
-    <div id="messages" class="messages"></div>
-
-    <div class="input-area">
-      <input id="input" placeholder="輸入訊息...">
-      <button onclick="send()">送出</button>
-    </div>
-  </div>
-
+<div id="app">
+  <h2 id="text"></h2>
+  <div id="choices"></div>
 </div>
 
 <script>
-let favor = 50;
+const flow = [
+  { type:"q", text:"你比較常在哪種環境放鬆？", c:["安靜的地方","熱鬧的地方","自己房間","戶外"] },
+  { type:"msg", text:"原來你是這種人" },
 
-function addMsg(text, type) {
-  const div = document.createElement("div");
-  div.className = "msg " + type;
-  div.innerText = text;
-  messages.appendChild(div);
-  messages.scrollTop = messages.scrollHeight;
+  { type:"q", text:"你通常幾點睡？", c:["很早","普通","很晚","不固定"] },
+  { type:"msg", text:"難怪那個時間…" },
+
+  { type:"q", text:"有人默默關心你，你會？", c:["開心","不確定","覺得怪","無感"] },
+  { type:"msg", text:"我就是那樣的人" },
+
+  { type:"q", text:"你會鎖門嗎？", c:["一定會","偶爾","很少","幾乎不會"] },
+  { type:"msg", text:"有時候其實不用鎖" },
+
+  { type:"q", text:"你有沒有覺得有人在看你？", c:["有","沒有","偶爾","不確定"] },
+  { type:"msg", text:"你終於注意到了" },
+
+  { type:"q", text:"如果有人說「我一直在你身邊」，你覺得？", c:["浪漫","奇怪","可怕","不相信"] },
+  { type:"msg", text:"你選哪個…我都會在" },
+
+  { type:"q", text:"現在的你，是一個人嗎？", c:["是","不是"] }
+];
+
+let step = 0;
+
+const textEl = document.getElementById("text");
+const choicesEl = document.getElementById("choices");
+
+/* 打字效果 */
+function typeText(str, speed = 40, callback) {
+  textEl.innerText = "";
+  let i = 0;
+  let timer = setInterval(() => {
+    textEl.innerText += str[i];
+    i++;
+    if (i >= str.length) {
+      clearInterval(timer);
+      if (callback) callback();
+    }
+  }, speed);
 }
 
-function updateUI() {
-  fill.style.width = favor + "%";
-  favorText.innerText = "好感度 " + favor;
+/* 顯示流程 */
+function show() {
+  choicesEl.innerHTML = "";
+  const item = flow[step];
 
-  // 情緒顯示
-  if (favor > 70) {
-    mood.innerText = "害羞中 😳";
-  } else if (favor < 30) {
-    mood.innerText = "生氣 😡";
+  if (item.type === "q") {
+    typeText(item.text);
+
+    item.c.forEach(choice => {
+      const btn = document.createElement("button");
+      btn.innerText = choice;
+
+      btn.onclick = next;
+
+      // 微抖動效果
+      btn.onmouseover = () => {
+        btn.style.transform = "translateX(" + (Math.random()*6) + "px)";
+      };
+      btn.onmouseout = () => {
+        btn.style.transform = "";
+      };
+
+      choicesEl.appendChild(btn);
+    });
+
   } else {
-    mood.innerText = "普通 😐";
+    typeText(item.text, 50);
+
+    setTimeout(() => {
+      step++;
+      show();
+    }, 1500);
   }
 }
 
-function reply(input) {
-  let r = "哼...隨便啦";
-
-  if (input.includes("喜歡")) {
-    favor += 10;
-    r = "誰喜歡你啊！😳";
-  } else if (input.includes("討厭")) {
-    favor -= 10;
-    r = "那就別來找我😡";
-  } else if (input.includes("你好")) {
-    favor += 5;
-    r = "才、才沒有在等你呢";
+function next() {
+  step++;
+  if (step < flow.length) {
+    show();
+  } else {
+    ending();
   }
-
-  // 高好感度
-  if (favor > 70) {
-    r += "\n（小聲）其實我有點開心...";
-  }
-
-  favor = Math.max(0, Math.min(100, favor));
-  updateUI();
-
-  setTimeout(() => addMsg(r, "bot"), 300);
 }
 
-function send() {
-  const text = input.value.trim();
-  if (!text) return;
+/* 💀 最終結尾（完整版） */
+function ending() {
+  choicesEl.innerHTML = "";
 
-  addMsg(text, "user");
-  reply(text);
+  typeText("分析中...", 60);
 
-  input.value = "";
+  setTimeout(() => typeText("分析你的作息...", 60), 1500);
+  setTimeout(() => typeText("同步你的習慣...", 60), 3000);
+  setTimeout(() => typeText("建立個人檔案...", 60), 4500);
+
+  setTimeout(() => typeText("你給人的印象是冷靜又容易被注意", 50), 6500);
+
+  setTimeout(() => typeText("但有件事很奇怪", 50), 9000);
+
+  setTimeout(() => typeText("你的習慣、你的時間", 50), 11000);
+
+  setTimeout(() => typeText("都很好記", 50), 13000);
+
+  setTimeout(() => {
+    document.body.style.background = "#000";
+    typeText("我已經看你很久了", 80);
+  }, 15000);
+
+  setTimeout(() => {
+    typeText("現在…你還覺得自己是一個人嗎？", 80);
+  }, 18000);
+
+  setTimeout(() => {
+    typeText("……", 200);
+  }, 21000);
+
+  setTimeout(() => {
+    textEl.style.color = "red";
+    typeText("現在你是我的了", 120);
+  }, 23000);
+
+  setTimeout(() => {
+    typeText("現在你永遠是我的了", 150);
+  }, 26000);
 }
+
+show();
 </script>
 
 </body>
