@@ -1,11 +1,305 @@
-<!doctype html>
-<html>
-  <head>
-    <meta charset = "utf-8">
-    <title>進來的都是給</title>
-    <link rel="icon" href="icon.png">
-  </head>
-  <body>
-      hello world
-  </body>
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>互動戀愛養成</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background: #1a1a2e;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+/* 畫面切換 */
+.screen {
+  display: none;
+}
+.active {
+  display: block;
+}
+
+/* 選角色畫面 */
+.select {
+  text-align: center;
+}
+.char-btn {
+  padding: 15px 25px;
+  margin: 10px;
+  border: none;
+  border-radius: 10px;
+  background: #ff6fa5;
+  color: white;
+  cursor: pointer;
+}
+
+/* 遊戲畫面 */
+.game {
+  width: 850px;
+  height: 520px;
+  background: #2a2a40;
+  border-radius: 20px;
+  display: flex;
+  overflow: hidden;
+}
+
+/* 左側 */
+.left {
+  width: 35%;
+  background: #343456;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.left img {
+  width: 140px;
+  border-radius: 20px;
+}
+
+.name {
+  margin-top: 10px;
+  font-size: 20px;
+}
+
+/* 好感 */
+.bar {
+  width: 80%;
+  height: 20px;
+  background: #555;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+.fill {
+  height: 100%;
+  width: 50%;
+  background: pink;
+}
+
+/* 右側 */
+.right {
+  width: 65%;
+  display: flex;
+  flex-direction: column;
+}
+
+.messages {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+}
+
+.msg {
+  margin: 8px 0;
+}
+.user {
+  text-align: right;
+  color: #9fe6ff;
+}
+.bot {
+  color: #ffb3d9;
+}
+
+/* 輸入 */
+.input-area {
+  display: flex;
+}
+input {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: #222;
+  color: white;
+}
+button {
+  width: 80px;
+  background: #ff5fa2;
+  border: none;
+  color: white;
+}
+
+/* 小提示 */
+.hint {
+  font-size: 12px;
+  opacity: 0.6;
+}
+</style>
+</head>
+
+<body>
+
+<!-- 選角色 -->
+<div id="selectScreen" class="screen active select">
+  <h1>選擇你的聊天對象 💖</h1>
+  <button class="char-btn" onclick="startGame('tsundere')">😤 傲嬌</button>
+  <button class="char-btn" onclick="startGame('gentle')">🌸 溫柔</button>
+  <button class="char-btn" onclick="startGame('devil')">😈 毒舌</button>
+</div>
+
+<!-- 遊戲畫面 -->
+<div id="gameScreen" class="screen">
+  <div class="game">
+
+    <div class="left">
+      <img id="avatar" src="">
+      <div id="charName" class="name"></div>
+
+      <div class="bar">
+        <div id="favorFill" class="fill"></div>
+      </div>
+      <div id="favorText"></div>
+    </div>
+
+    <div class="right">
+      <div id="messages" class="messages"></div>
+
+      <div class="input-area">
+        <input id="input" placeholder="說點什麼...">
+        <button onclick="send()">送出</button>
+      </div>
+
+      <div class="hint">💡 試試：喜歡 / 討厭 / 無聊 / 在幹嘛</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let character = "";
+let favor = 50;
+
+/* 角色資料 */
+const chars = {
+  tsundere: {
+    name: "傲嬌醬",
+    img: [
+      "https://i.imgur.com/8Km9tLL.png",
+      "https://i.imgur.com/2WZtOD6.png"
+    ]
+  },
+  gentle: {
+    name: "溫柔醬",
+    img: [
+      "https://i.imgur.com/3GvwNBf.png",
+      "https://i.imgur.com/fY8XnYp.png"
+    ]
+  },
+  devil: {
+    name: "毒舌醬",
+    img: [
+      "https://i.imgur.com/JqEuJ6t.png",
+      "https://i.imgur.com/Z8l9p8R.png"
+    ]
+  }
+};
+
+/* 開始 */
+function startGame(type) {
+  character = type;
+
+  const save = JSON.parse(localStorage.getItem(type));
+  if (save) favor = save.favor;
+
+  document.getElementById("selectScreen").classList.remove("active");
+  document.getElementById("gameScreen").classList.add("active");
+
+  charName.innerText = chars[type].name;
+
+  updateUI();
+}
+
+/* UI更新 */
+function updateUI() {
+  favorFill.style.width = favor + "%";
+  favorText.innerText = "好感度：" + favor;
+
+  // 表情切換
+  if (favor > 70) {
+    avatar.src = chars[character].img[1];
+  } else {
+    avatar.src = chars[character].img[0];
+  }
+
+  localStorage.setItem(character, JSON.stringify({ favor }));
+}
+
+/* 加訊息 */
+function addMsg(text, type) {
+  const div = document.createElement("div");
+  div.className = "msg " + type;
+  div.innerText = text;
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+/* 回應 */
+function reply(input) {
+  let r = "";
+
+  if (character === "tsundere") {
+    if (input.includes("喜歡")) {
+      favor += 10;
+      r = "誰喜歡你啊！笨蛋！😳";
+    } else if (input.includes("討厭")) {
+      favor -= 10;
+      r = "那就別來找我啊😡";
+    } else {
+      r = "哼...隨便啦";
+    }
+  }
+
+  if (character === "gentle") {
+    if (input.includes("喜歡")) {
+      favor += 10;
+      r = "我也很喜歡你呢😊";
+    } else if (input.includes("討厭")) {
+      favor -= 5;
+      r = "發生什麼事了嗎...？🥺";
+    } else {
+      r = "我一直都在喔";
+    }
+  }
+
+  if (character === "devil") {
+    if (input.includes("喜歡")) {
+      favor += 5;
+      r = "呵，有點意思😏";
+    } else if (input.includes("討厭")) {
+      favor -= 10;
+      r = "你以為我會在意？😈";
+    } else {
+      r = "無聊";
+    }
+  }
+
+  // 好感度劇情
+  if (favor > 80) {
+    r += "\n（氣氛變得有點曖昧…）";
+  }
+
+  favor = Math.max(0, Math.min(100, favor));
+  updateUI();
+
+  setTimeout(() => addMsg(r, "bot"), 400);
+}
+
+/* 發送 */
+function send() {
+  const text = input.value.trim();
+  if (!text) return;
+
+  addMsg(text, "user");
+  reply(text);
+
+  input.value = "";
+}
+</script>
+
+</body>
 </html>
