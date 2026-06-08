@@ -36,12 +36,20 @@ button {
   color: white;
   border: 1px solid #444;
   cursor: pointer;
-  transition: 0.2s;
 }
 
 button:hover {
-  transform: translateX(5px);
   background: #333;
+  transform: translateX(5px);
+}
+
+input {
+  padding: 10px;
+  width: 90%;
+  margin-top: 10px;
+  background: #111;
+  color: white;
+  border: 1px solid #444;
 }
 </style>
 </head>
@@ -54,219 +62,240 @@ button:hover {
 </div>
 
 <script>
-/* 分類計分 */
-let score = {
-  calm: 0,
-  sensitive: 0,
-  defensive: 0,
-  open: 0
-};
 
-/* 題目流程 */
-const flow = [
-  {
-    type:"q",
-    text:"你比較常在哪種環境放鬆？",
-    c:[
-      {t:"安靜的地方", s:"calm"},
-      {t:"熱鬧的地方", s:"open"},
-      {t:"自己房間", s:"defensive"},
-      {t:"戶外", s:"sensitive"}
-    ]
-  },
-  { type:"msg", text:"原來你是這種人" },
+/* ===== 變數 ===== */
+let playerName = "";
+let score = { calm:0, sensitive:0, defensive:0, open:0 };
 
-  {
-    type:"q",
-    text:"你通常幾點睡？",
-    c:[
-      {t:"很早", s:"calm"},
-      {t:"普通", s:"open"},
-      {t:"很晚", s:"sensitive"},
-      {t:"不固定", s:"defensive"}
-    ]
-  },
-  { type:"msg", text:"難怪那個時間…" },
-
-  {
-    type:"q",
-    text:"有人默默關心你，你會？",
-    c:[
-      {t:"開心", s:"open"},
-      {t:"不確定", s:"calm"},
-      {t:"覺得怪", s:"defensive"},
-      {t:"無感", s:"sensitive"}
-    ]
-  },
-  { type:"msg", text:"我就是那樣的人" },
-
-  {
-    type:"q",
-    text:"你會鎖門嗎？",
-    c:[
-      {t:"一定會", s:"defensive"},
-      {t:"偶爾", s:"calm"},
-      {t:"很少", s:"open"},
-      {t:"心情不好的話一定會", s:"sensitive"}
-    ]
-  },
-  { type:"msg", text:"有時候其實不用鎖" },
-
-  {
-    type:"q",
-    text:"你有沒有覺得有人在看你？",
-    c:[
-      {t:"有", s:"sensitive"},
-      {t:"之前有", s:"calm"},
-      {t:"偶爾", s:"open"},
-      {t:"不確定", s:"defensive"}
-    ]
-  },
-  { type:"msg", text:"你終於注意到了" },
-
-  {
-    type:"q",
-    text:"如果有人說「我一直在你身邊」，你覺得？",
-    c:[
-      {t:"浪漫", s:"open"},
-      {t:"奇怪", s:"defensive"},
-      {t:"可怕", s:"sensitive"},
-      {t:"不相信", s:"calm"}
-    ]
-  },
-  { type:"msg", text:"你選哪個…我都會在" },
-
-  {
-    type:"q",
-    text:"現在的你，是一個人嗎？",
-    c:[
-      {t:"是", s:"calm"},
-      {t:"不是", s:"sensitive"}
-    ]
-  }
-];
-
-let step = 0;
 const textEl = document.getElementById("text");
 const choicesEl = document.getElementById("choices");
 
-/* 打字效果 */
-function typeText(str, speed = 40, callback) {
-  textEl.innerText = "";
-  let i = 0;
-  let timer = setInterval(() => {
-    textEl.innerText += str[i];
-    i++;
-    if (i >= str.length) {
-      clearInterval(timer);
-      if (callback) callback();
-    }
-  }, speed);
+let step = 0;
+
+/* ===== 時間 ===== */
+function getNowTime() {
+  const now = new Date();
+  return now.getHours() + ":" + String(now.getMinutes()).padStart(2,'0');
 }
 
-/* 顯示流程 */
+/* ===== 打字 ===== */
+function typeText(str, speed=40, cb) {
+  textEl.innerText = "";
+  let i=0;
+  let t=setInterval(()=>{
+    textEl.innerText += str[i];
+    i++;
+    if(i>=str.length){
+      clearInterval(t);
+      if(cb) cb();
+    }
+  },speed);
+}
+
+/* ===== 名字慢慢出現 ===== */
+function typeName(name, speed=200, cb) {
+  textEl.innerText = "";
+  textEl.style.letterSpacing = "2px";
+
+  let i=0;
+  let t=setInterval(()=>{
+    textEl.innerText += name[i];
+    i++;
+    if(i>=name.length){
+      clearInterval(t);
+      if(cb) cb();
+    }
+  },speed);
+}
+
+/* ===== 題目 ===== */
+const flow = [
+
+{ type:"input", text:"請輸入你的名字" },
+{ type:"msg", text:"我記住了" },
+
+{
+type:"q", text:"你比較常在哪種環境放鬆？",
+c:[
+{t:"安靜", s:"calm"},
+{t:"熱鬧", s:"open"},
+{t:"自己", s:"defensive"},
+{t:"戶外", s:"sensitive"}
+]},
+
+{ type:"msg", text:"原來你是這種人" },
+
+{
+type:"q", text:"你通常幾點睡？",
+c:[
+{t:"很早", s:"calm"},
+{t:"普通", s:"open"},
+{t:"很晚", s:"sensitive"},
+{t:"不固定", s:"defensive"}
+]},
+
+{ type:"msg", text:"難怪那個時間…" },
+
+{
+type:"q", text:"有人默默關心你，你會？",
+c:[
+{t:"開心", s:"open"},
+{t:"不確定", s:"calm"},
+{t:"怪怪的", s:"defensive"},
+{t:"無感", s:"sensitive"}
+]},
+
+{ type:"msg", text:"我就是那樣的人" },
+
+{
+type:"q", text:"你會鎖門嗎？",
+c:[
+{t:"一定會", s:"defensive"},
+{t:"偶爾", s:"calm"},
+{t:"很少", s:"open"},
+{t:"不會", s:"sensitive"}
+]},
+
+{ type:"msg", text:"有時候其實不用鎖" },
+
+{
+type:"q", text:"你有沒有覺得有人在看你？",
+c:[
+{t:"有", s:"sensitive"},
+{t:"沒有", s:"calm"},
+{t:"偶爾", s:"open"},
+{t:"不確定", s:"defensive"}
+]},
+
+{ type:"msg", text:"你終於注意到了" },
+
+{
+type:"q", text:"現在的你，是一個人嗎？",
+c:[
+{t:"是", s:"calm"},
+{t:"不是", s:"sensitive"}
+]}
+
+];
+
+/* ===== 顯示 ===== */
 function show() {
   choicesEl.innerHTML = "";
-  const item = flow[step];
+  let item = flow[step];
 
-  if (item.type === "q") {
+  if(item.type==="input"){
     typeText(item.text);
 
-    item.c.forEach(choice => {
-      const btn = document.createElement("button");
-      btn.innerText = choice.t;
+    let input=document.createElement("input");
+    input.placeholder="你的名字";
 
-      btn.onclick = () => {
-        if (choice.s) score[choice.s]++;
+    let btn=document.createElement("button");
+    btn.innerText="確認";
+
+    btn.onclick=()=>{
+      playerName = input.value || "你";
+      next();
+    };
+
+    choicesEl.appendChild(input);
+    choicesEl.appendChild(btn);
+    return;
+  }
+
+  if(item.type==="q"){
+    typeText(item.text);
+
+    item.c.forEach(choice=>{
+      let btn=document.createElement("button");
+      btn.innerText=choice.t;
+
+      btn.onclick=()=>{
+        score[choice.s]++;
         next();
-      };
-
-      btn.onmouseover = () => {
-        btn.style.transform = "translateX(" + (Math.random()*6) + "px)";
-      };
-      btn.onmouseout = () => {
-        btn.style.transform = "";
       };
 
       choicesEl.appendChild(btn);
     });
 
   } else {
-    typeText(item.text, 50);
-
-    setTimeout(() => {
-      step++;
-      show();
-    }, 1500);
+    typeText(item.text);
+    setTimeout(()=>{ step++; show(); },1500);
   }
 }
 
-function next() {
+function next(){
   step++;
-  if (step < flow.length) {
-    show();
-  } else {
-    ending();
-  }
+  if(step<flow.length) show();
+  else ending();
 }
 
-/* 計算結果 */
-function getResult() {
-  let max = "calm";
-  for (let k in score) {
-    if (score[k] > score[max]) max = k;
+/* ===== 結果 ===== */
+function getResult(){
+  let max="calm";
+  for(let k in score){
+    if(score[k]>score[max]) max=k;
   }
   return max;
 }
 
-/* 💀 最終結尾 */
-function ending() {
-  choicesEl.innerHTML = "";
+/* ===== 💀 結尾 ===== */
+function ending(){
+  choicesEl.innerHTML="";
 
-  typeText("分析中...", 60);
+  typeText("分析中...",60);
 
-  setTimeout(() => typeText("分析你的選擇...", 60), 1500);
+  setTimeout(()=>typeText("分析你的選擇...",60),1500);
 
-  setTimeout(() => {
-    let r = getResult();
-    let txt = "";
+  setTimeout(()=>{
+    let r=getResult();
+    let txt="";
+    if(r==="calm") txt="你是理性型人格";
+    if(r==="sensitive") txt="你是敏感型人格";
+    if(r==="defensive") txt="你是防備型人格";
+    if(r==="open") txt="你是開放型人格";
+    typeText(txt,50);
+  },3000);
 
-    if (r === "calm") txt = "你是理性型人格，習慣冷靜觀察一切";
-    if (r === "sensitive") txt = "你是敏感型人格，容易察覺細節與情緒";
-    if (r === "defensive") txt = "你是防備型人格，對外界保持距離";
-    if (r === "open") txt = "你是開放型人格，容易接受他人";
+  setTimeout(()=>{
+    typeText("也因此…你更容易被注意到",60);
+  },6000);
 
-    typeText(txt, 50);
-  }, 3000);
+  setTimeout(()=>{
+    typeText("……",200);
+  },9000);
 
-  setTimeout(() => {
-    typeText("也因此…你更容易被注意到", 60);
-  }, 6000);
+  setTimeout(()=>{
+    typeText("現在時間是：" + getNowTime(),80);
+  },11000);
 
-  setTimeout(() => {
-    document.body.style.background = "#000";
-    typeText("我已經看你很久了", 80);
-  }, 9000);
+  setTimeout(()=>{
+    typeText("我是在這個時間看到你的",80);
+  },13000);
 
-  setTimeout(() => {
-    typeText("現在…你還覺得自己是一個人嗎？", 80);
-  }, 12000);
+  setTimeout(()=>{
+    document.body.style.background="#000";
+    typeText("你還沒發現嗎？",80);
+  },15000);
 
-  setTimeout(() => {
-    typeText("……", 200);
-  }, 15000);
+  setTimeout(()=>{
+    typeName(playerName,250,()=>{
+      setTimeout(()=>{
+        typeText("…現在你是我的了",120);
+      },500);
+    });
+  },17000);
 
-  setTimeout(() => {
-    textEl.style.color = "red";
-    typeText("現在你是我的了...", 120);
-  }, 17000);
-
-  setTimeout(() => {
-    typeText("現在你永遠是我的了", 150);
-  }, 20000);
+  setTimeout(()=>{
+    typeName(playerName,300,()=>{
+      setTimeout(()=>{
+        typeText("，現在你永遠是我的了",150);
+      },400);
+    });
+  },20000);
 }
 
 show();
+
 </script>
 
 </body>
