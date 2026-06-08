@@ -2,286 +2,247 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>心理測驗</title>
+<title>心理測驗喔喵</title>
 
 <style>
-body{
-  background:#000;
-  color:#0f0;
-  font-family:monospace;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-  margin:0;
-  overflow:hidden;
+body {
+  background: black;
+  color: white;
+  font-family: monospace;
+  text-align: center;
+  padding: 30px;
+  transition: 0.3s;
 }
 
-#game{
-  width:90%;
-  max-width:500px;
+#box {
+  max-width: 600px;
+  margin: auto;
 }
 
-#text{
-  min-height:120px;
-  white-space:pre-line;
+button {
+  display: block;
+  margin: 10px auto;
+  padding: 10px;
+  background: #111;
+  color: white;
+  border: 1px solid #555;
+  cursor: pointer;
 }
 
-button,input{
-  margin-top:10px;
-  background:#111;
-  color:#0f0;
-  border:1px solid #0f0;
-  padding:8px;
+button:hover {
+  background: #222;
 }
 
-/* glitch */
-.glitch{
-  animation: glitch 0.08s infinite;
+.glitch {
+  animation: shake 0.15s infinite;
+  color: red;
 }
 
-@keyframes glitch{
-  0%{transform:translate(1px,0)}
-  50%{transform:translate(-1px,1px)}
-  100%{transform:translate(1px,-1px)}
+@keyframes shake {
+  0% { transform: translate(1px,1px); }
+  50% { transform: translate(-1px,-2px); }
+  100% { transform: translate(1px,-1px); }
 }
 
-/* flicker */
-.flicker{
-  animation: flicker 0.15s infinite;
-}
-
-@keyframes flicker{
-  0%{opacity:1}
-  50%{opacity:0.4}
-  100%{opacity:1}
-}
-
-/* noise */
-#noise{
-  position:fixed;
+#jumpscare {
+  position: fixed;
   top:0;
   left:0;
   width:100%;
   height:100%;
-  pointer-events:none;
-  opacity:0.08;
-  background:url('https://media.giphy.com/media/oEI9uBYSzLpBK/giphy.gif');
-  display:none;
+  background:black;
+  color:red;
+  font-size:40px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  opacity:0;
+  transition:0.2s;
 }
 </style>
 </head>
 
 <body>
 
-<div id="noise"></div>
+<div id="time"></div>
+<div id="nameDisplay"></div>
 
-<div id="game">
-  <div id="text"></div>
-  <div id="input"></div>
+<div id="box">
+  <h2 id="text"></h2>
+  <div id="choices"></div>
 </div>
 
+<div id="jumpscare">我在你後面</div>
+
 <script>
-
-const textEl = document.getElementById("text");
-const inputEl = document.getElementById("input");
-
 let playerName = "";
-let affection = 0;
+let corruption = 0;
 
-/* 打字（慢+卡頓） */
-function typeText(text, speed=40){
-  return new Promise(resolve=>{
-    textEl.innerText="";
-    let i=0;
+let score = { rational:0, fear:0, attach:0 };
 
-    function typing(){
-      if(i < text.length){
-        textEl.innerText += text[i];
-        let randomDelay = Math.random()*speed*0.8;
-        setTimeout(typing, speed + randomDelay);
-        i++;
-      }else resolve();
-    }
+let step = 0;
 
-    typing();
-  });
-}
-
-/* 選項 */
-function showChoices(choices){
-  inputEl.innerHTML="";
-  choices.forEach(c=>{
-    let btn=document.createElement("button");
-    btn.innerText=c.text;
-    btn.onclick=()=>{
-      affection += c.affection || 0;
-      c.next();
-    };
-    inputEl.appendChild(btn);
-  });
-}
-
-/* 名字 */
-function askName(){
-  textEl.innerText="告訴我你的名字…";
-  inputEl.innerHTML='<input id="nameInput"><button onclick="saveName()">確定</button>';
-}
-
-function saveName(){
-  playerName=document.getElementById("nameInput").value || "你";
-  inputEl.innerHTML="";
-  scene1();
-}
-
-/* 污染 */
-function corruptText(level=1){
-
-  if(level===1){
-    textEl.classList.add("glitch");
+const questions = [
+  {
+    q:"晚上你通常在做什麼？",
+    c:[
+      ["滑手機","attach"],
+      ["工作","rational"],
+      ["發呆","fear"]
+    ]
+  },
+  {
+    q:"你聽到奇怪聲音時會？",
+    c:[
+      ["去查看","rational"],
+      ["躲起來","fear"],
+      ["找人聊天","attach"]
+    ]
+  },
+  {
+    q:"你覺得有人在看你嗎？",
+    c:[
+      ["沒有","rational"],
+      ["可能有","fear"],
+      ["希望有","attach"]
+    ]
+  },
+  {
+    q:"如果有人一直陪你，你會？",
+    c:[
+      ["接受","attach"],
+      ["拒絕","rational"],
+      ["害怕","fear"]
+    ]
   }
+];
 
-  if(level===2){
-    textEl.classList.add("glitch","flicker");
-
-    let original = textEl.innerText;
-    textEl.innerText = original.split("").map(c=>{
-      return Math.random()<0.15 ? "░" : c;
-    }).join("");
-  }
-
-  if(level===3){
-    document.getElementById("noise").style.display="block";
-
-    let glitchInterval = setInterval(()=>{
-      document.body.style.background =
-        Math.random()>0.5 ? "#000" : "#111";
-    },80);
-
-    setTimeout(()=>clearInterval(glitchInterval),2000);
-  }
+function typeText(text, el, speed=40) {
+  el.innerHTML = "";
+  let i = 0;
+  let interval = setInterval(()=>{
+    el.innerHTML += text[i];
+    i++;
+    if(i>=text.length) clearInterval(interval);
+  }, speed);
 }
 
-/* jump scare */
-function jumpScare(msg){
-  textEl.innerText=msg;
-  textEl.style.fontSize="42px";
-  textEl.style.color="red";
-  textEl.classList.add("glitch");
-
-  document.body.style.background="#fff";
-
-  let audio = new Audio("https://www.soundjay.com/human/sounds/scream-01.mp3");
-  audio.play().catch(()=>{});
-
-  setTimeout(()=>{
-    document.body.style.background="#000";
-    textEl.style.fontSize="20px";
-    textEl.style.color="#0f0";
+function typeName(name) {
+  let el = document.getElementById("nameDisplay");
+  el.innerHTML = "使用者：";
+  let i=0;
+  let interval=setInterval(()=>{
+    el.innerHTML += name[i];
+    i++;
+    if(i>=name.length) clearInterval(interval);
   },150);
 }
 
-/* 開始 */
-async function scene1(){
-  await typeText("開始測驗...",40);
-
-  await typeText("現在時間是："+new Date().toLocaleTimeString(),35);
-
-  await new Promise(r=>setTimeout(r,800));
-
-  await typeText("我也是在這個時間看到你的",120);
-
-  await typeText("你一個人在房間時會？",60);
-
-  showChoices([
-    {text:"滑手機",affection:1,next:scene2},
-    {text:"發呆",affection:2,next:scene2},
-    {text:"關燈",affection:3,next:scene2}
-  ]);
+function corruptName(name){
+  if(corruption>=6) return "我找到你了";
+  if(corruption>=4) return "你";
+  if(corruption>=2){
+    return name.split("").map(c=>Math.random()>0.7?"…":c).join("");
+  }
+  return name;
 }
 
-/* 中段 */
-async function scene2(){
-  await typeText("如果有人一直看著你？",80);
-
-  showChoices([
-    {text:"無視",affection:1,next:scene3},
-    {text:"有點不舒服",affection:2,next:scene3},
-    {text:"覺得熟悉",affection:4,next:scene3}
-  ]);
+function updateName(){
+  document.getElementById("nameDisplay").innerText =
+  "使用者：" + corruptName(playerName);
 }
 
-/* 異常 */
-async function scene3(){
-  await typeText("你相信『被注視』嗎？",100);
+function updateTime(){
+  const now = new Date();
+  let t = now.toLocaleTimeString();
 
-  showChoices([
-    {text:"不信",affection:1,next:ending},
-    {text:"有可能",affection:3,next:ending},
-    {text:"一直都在",affection:5,next:ending}
-  ]);
-}
-
-/* 結尾 */
-async function ending(){
-
-  inputEl.innerHTML="";
-
-  await typeText("分析中...",80);
-  await new Promise(r=>setTimeout(r,800));
-
-  await typeText("你的結果是：",100);
-
-  if(affection<5){
-    await typeText("【普通型人格】",120);
-  }else if(affection<9){
-    await typeText("【敏感型人格】",140);
-  }else{
-    await typeText("【連結型人格】",160);
+  if(corruption>=2){
+    t = t.replace(/\d/g,()=>Math.random()>0.7?"?":Math.floor(Math.random()*10));
+  }
+  if(corruption>=4){
+    t = t.replace(/:/g," ");
+  }
+  if(corruption>=6){
+    t = "--:--:--";
   }
 
-  await new Promise(r=>setTimeout(r,1200));
+  document.getElementById("time").innerText = "現在時間："+t;
+}
+setInterval(updateTime,1000);
 
-  await typeText("..."+playerName+"…",140);
-  corruptText(1);
+function nextQuestion(){
+  updateName();
 
-  await new Promise(r=>setTimeout(r,1500));
+  if(corruption>=5){
+    document.body.classList.add("glitch");
+  }
 
-  await typeText("你有沒有發現…",160);
-  corruptText(2);
+  if(step >= questions.length){
+    ending();
+    return;
+  }
 
-  await new Promise(r=>setTimeout(r,1200));
+  let q = questions[step];
+  typeText(q.q, document.getElementById("text"));
 
-  await typeText("問題越來越不像測驗？",180);
-  corruptText(3);
+  let choices = document.getElementById("choices");
+  choices.innerHTML = "";
 
-  await new Promise(r=>setTimeout(r,1000));
+  q.c.forEach(c=>{
+    let btn = document.createElement("button");
+    btn.innerText = c[0];
+    btn.onclick = ()=>{
+      score[c[1]]++;
+      corruption++;
+      step++;
 
-  await typeText("不要回頭",200);
+      if(corruption===3){
+        typeText("奇怪…時間是不是不太對？", document.getElementById("text"));
+      }
 
-  // jump scare
-  setTimeout(()=>{
-    jumpScare(playerName+"，我就在你後面");
-  },800);
+      if(corruption===5){
+        jumpScare();
+      }
 
-  setTimeout(async ()=>{
-    await typeText("…現在你是我的了",200);
-  },2800);
-
-  // 偽安全 → 反轉
-  setTimeout(()=>{
-    textEl.innerText = playerName+"，你永遠是安全的";
-
-    setTimeout(()=>{
-      textEl.innerText = playerName+"░░░現在你永遠是我的了";
-    },800);
-
-  },5000);
+      setTimeout(nextQuestion,800);
+    };
+    choices.appendChild(btn);
+  });
 }
 
-// start
-askName();
+function jumpScare(){
+  let j = document.getElementById("jumpscare");
+  j.style.opacity = 1;
+  setTimeout(()=>{ j.style.opacity=0; },300);
+}
 
+function ending(){
+  let text = "";
+
+  if(score.attach>=2){
+    text = "你一直在找人陪\n\n所以我留下來了\n\n現在你永遠不會再一個人了\n\n現在你永遠是我的了";
+  }
+  else if(score.fear>=2){
+    text = "你一直在逃\n\n但你沒有發現\n\n你逃的方向\n\n一直都是我這邊";
+  }
+  else if(score.rational>=2){
+    text = "你察覺到了\n\n但太晚了\n\n你知道我是誰了對吧？";
+  }
+  else{
+    text = "我讀不懂你\n\n但沒關係\n\n我可以慢慢看";
+  }
+
+  typeText(text, document.getElementById("text"),60);
+  document.getElementById("choices").innerHTML="";
+}
+
+function start(){
+  playerName = prompt("輸入你的名字");
+  typeName(playerName);
+  setTimeout(nextQuestion,1500);
+}
+
+start();
 </script>
 
 </body>
