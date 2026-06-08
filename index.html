@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>心理測驗喔喵</title>
+<title>爆炸準心理測驗</title>
 
 <style>
 body {
@@ -11,12 +11,6 @@ body {
   font-family: monospace;
   text-align: center;
   padding: 30px;
-  transition: 0.3s;
-}
-
-#box {
-  max-width: 600px;
-  margin: auto;
 }
 
 button {
@@ -29,8 +23,9 @@ button {
   cursor: pointer;
 }
 
-button:hover {
-  background: #222;
+button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 .glitch {
@@ -46,17 +41,15 @@ button:hover {
 
 #jumpscare {
   position: fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  background:black;
-  color:red;
-  font-size:40px;
+  inset: 0;
+  background: black;
+  color: red;
+  font-size: 40px;
   display:flex;
   justify-content:center;
   align-items:center;
   opacity:0;
+  pointer-events:none;
   transition:0.2s;
 }
 </style>
@@ -67,75 +60,55 @@ button:hover {
 <div id="time"></div>
 <div id="nameDisplay"></div>
 
-<div id="box">
-  <h2 id="text"></h2>
-  <div id="choices"></div>
-</div>
+<h2 id="text"></h2>
+<div id="choices"></div>
 
 <div id="jumpscare">我在你後面</div>
 
 <script>
 let playerName = "";
 let corruption = 0;
+let locked = false; // 🔒 核心鎖
 
 let score = { rational:0, fear:0, attach:0 };
-
 let step = 0;
 
 const questions = [
-  {
-    q:"晚上你通常在做什麼？",
-    c:[
-      ["滑手機","attach"],
-      ["工作","rational"],
-      ["發呆","fear"]
-    ]
-  },
-  {
-    q:"你聽到奇怪聲音時會？",
-    c:[
-      ["去查看","rational"],
-      ["躲起來","fear"],
-      ["找人聊天","attach"]
-    ]
-  },
-  {
-    q:"你覺得有人在看你嗎？",
-    c:[
-      ["沒有","rational"],
-      ["可能有","fear"],
-      ["希望有","attach"]
-    ]
-  },
-  {
-    q:"如果有人一直陪你，你會？",
-    c:[
-      ["接受","attach"],
-      ["拒絕","rational"],
-      ["害怕","fear"]
-    ]
-  }
+  { q:"晚上你通常在做什麼？",
+    c:[["滑手機","attach"],["工作","rational"],["發呆","fear"]] },
+  { q:"你聽到奇怪聲音時會？",
+    c:[["去查看","rational"],["躲起來","fear"],["找人聊天","attach"]] },
+  { q:"你覺得有人在看你嗎？",
+    c:[["沒有","rational"],["可能有","fear"],["希望有","attach"]] },
+  { q:"如果有人一直陪你，你會？",
+    c:[["接受","attach"],["拒絕","rational"],["害怕","fear"]] }
 ];
 
-function typeText(text, el, speed=40) {
-  el.innerHTML = "";
-  let i = 0;
-  let interval = setInterval(()=>{
-    el.innerHTML += text[i];
-    i++;
-    if(i>=text.length) clearInterval(interval);
-  }, speed);
+// ✅ 打字（回傳 Promise → 確保跑完才繼續）
+function typeText(text, el, speed=40){
+  return new Promise(resolve=>{
+    el.innerHTML = "";
+    let i = 0;
+    let timer = setInterval(()=>{
+      el.innerHTML += text[i];
+      i++;
+      if(i>=text.length){
+        clearInterval(timer);
+        resolve();
+      }
+    }, speed);
+  });
 }
 
-function typeName(name) {
+function typeName(name){
   let el = document.getElementById("nameDisplay");
   el.innerHTML = "使用者：";
   let i=0;
-  let interval=setInterval(()=>{
+  let timer=setInterval(()=>{
     el.innerHTML += name[i];
     i++;
-    if(i>=name.length) clearInterval(interval);
-  },150);
+    if(i>=name.length) clearInterval(timer);
+  },120);
 }
 
 function corruptName(name){
@@ -149,7 +122,7 @@ function corruptName(name){
 
 function updateName(){
   document.getElementById("nameDisplay").innerText =
-  "使用者：" + corruptName(playerName);
+    "使用者：" + corruptName(playerName);
 }
 
 function updateTime(){
@@ -170,7 +143,18 @@ function updateTime(){
 }
 setInterval(updateTime,1000);
 
-function nextQuestion(){
+function jumpScare(){
+  let j = document.getElementById("jumpscare");
+  j.style.opacity = 1;
+  setTimeout(()=>{ j.style.opacity=0; },250);
+}
+
+// ✅ 主流程（完全同步控制）
+async function nextQuestion(){
+
+  if(locked) return; // 🔒 防重複
+  locked = true;
+
   updateName();
 
   if(corruption>=5){
@@ -178,12 +162,13 @@ function nextQuestion(){
   }
 
   if(step >= questions.length){
-    ending();
+    await ending();
     return;
   }
 
   let q = questions[step];
-  typeText(q.q, document.getElementById("text"));
+
+  await typeText(q.q, document.getElementById("text"));
 
   let choices = document.getElementById("choices");
   choices.innerHTML = "";
@@ -191,55 +176,63 @@ function nextQuestion(){
   q.c.forEach(c=>{
     let btn = document.createElement("button");
     btn.innerText = c[0];
-    btn.onclick = ()=>{
+
+    btn.onclick = async ()=>{
+
+      if(locked === false) return;
+
+      // 🔒 點下去立即鎖全部
+      document.querySelectorAll("button").forEach(b=>b.disabled=true);
+
       score[c[1]]++;
       corruption++;
       step++;
 
+      // 🎭 插入事件
       if(corruption===3){
-        typeText("奇怪…時間是不是不太對？", document.getElementById("text"));
+        await typeText("奇怪…時間是不是不太對？", text);
       }
 
       if(corruption===5){
         jumpScare();
+        await typeText("你剛剛有看到嗎？", text);
       }
 
-      setTimeout(nextQuestion,800);
+      choices.innerHTML = "";
+
+      locked = false; // 🔓 解鎖
+      nextQuestion();
     };
+
     choices.appendChild(btn);
   });
+
+  locked = false; // 🔓 顯示完題目才解鎖
 }
 
-function jumpScare(){
-  let j = document.getElementById("jumpscare");
-  j.style.opacity = 1;
-  setTimeout(()=>{ j.style.opacity=0; },300);
-}
-
-function ending(){
-  let text = "";
+async function ending(){
+  let t="";
 
   if(score.attach>=2){
-    text = "你一直在找人陪\n\n所以我留下來了\n\n現在你永遠不會再一個人了\n\n現在你永遠是我的了";
+    t="你一直在找人陪\n\n所以我留下來了\n\n現在你永遠不會再一個人了\n\n現在你永遠是我的了";
   }
   else if(score.fear>=2){
-    text = "你一直在逃\n\n但你沒有發現\n\n你逃的方向\n\n一直都是我這邊";
+    t="你一直在逃\n\n但你沒有發現\n\n你逃的方向\n\n一直都是我這邊";
   }
   else if(score.rational>=2){
-    text = "你察覺到了\n\n但太晚了\n\n你知道我是誰了對吧？";
+    t="你察覺到了\n\n但太晚了\n\n你知道我是誰了對吧？";
   }
   else{
-    text = "我讀不懂你\n\n但沒關係\n\n我可以慢慢看";
+    t="我讀不懂你\n\n但沒關係\n\n我可以慢慢看";
   }
 
-  typeText(text, document.getElementById("text"),60);
-  document.getElementById("choices").innerHTML="";
+  await typeText(t, document.getElementById("text"),60);
 }
 
 function start(){
   playerName = prompt("輸入你的名字");
   typeName(playerName);
-  setTimeout(nextQuestion,1500);
+  setTimeout(()=>{ nextQuestion(); },1000);
 }
 
 start();
