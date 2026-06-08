@@ -57,7 +57,7 @@ button,input{
   100%{opacity:1}
 }
 
-/* noise layer */
+/* noise */
 #noise{
   position:fixed;
   top:0;
@@ -89,7 +89,7 @@ const inputEl = document.getElementById("input");
 let playerName = "";
 let affection = 0;
 
-/* 💀 慢速 + 卡頓 */
+/* 打字（慢+卡頓） */
 function typeText(text, speed=40){
   return new Promise(resolve=>{
     textEl.innerText="";
@@ -98,14 +98,10 @@ function typeText(text, speed=40){
     function typing(){
       if(i < text.length){
         textEl.innerText += text[i];
-
         let randomDelay = Math.random()*speed*0.8;
         setTimeout(typing, speed + randomDelay);
-
         i++;
-      }else{
-        resolve();
-      }
+      }else resolve();
     }
 
     typing();
@@ -138,7 +134,7 @@ function saveName(){
   scene1();
 }
 
-/* 💀 污染 */
+/* 污染 */
 function corruptText(level=1){
 
   if(level===1){
@@ -166,7 +162,7 @@ function corruptText(level=1){
   }
 }
 
-/* 💀 jump scare */
+/* jump scare */
 function jumpScare(msg){
   textEl.innerText=msg;
   textEl.style.fontSize="42px";
@@ -185,12 +181,15 @@ function jumpScare(msg){
   },150);
 }
 
-/* 🟢 開始 */
+/* 開始 */
 async function scene1(){
   await typeText("開始測驗...",40);
+
   await typeText("現在時間是："+new Date().toLocaleTimeString(),35);
 
-  await new Promise(r=>setTimeout(r,500));
+  await new Promise(r=>setTimeout(r,800));
+
+  await typeText("我也是在這個時間看到你的",120);
 
   await typeText("你一個人在房間時會？",60);
 
@@ -201,7 +200,7 @@ async function scene1(){
   ]);
 }
 
-/* 🟡 中段 */
+/* 中段 */
 async function scene2(){
   await typeText("如果有人一直看著你？",80);
 
@@ -212,7 +211,7 @@ async function scene2(){
   ]);
 }
 
-/* 🔴 異常 */
+/* 異常 */
 async function scene3(){
   await typeText("你相信『被注視』嗎？",100);
 
@@ -223,7 +222,7 @@ async function scene3(){
   ]);
 }
 
-/* 💀 結尾 */
+/* 結尾 */
 async function ending(){
 
   inputEl.innerHTML="";
@@ -256,19 +255,28 @@ async function ending(){
   await typeText("問題越來越不像測驗？",180);
   corruptText(3);
 
-  // 💀 jump scare
+  await new Promise(r=>setTimeout(r,1000));
+
+  await typeText("不要回頭",200);
+
+  // jump scare
   setTimeout(()=>{
-    corruptText(3);
     jumpScare(playerName+"，我就在你後面");
-  },1200);
+  },800);
 
   setTimeout(async ()=>{
     await typeText("…現在你是我的了",200);
-  },3000);
+  },2800);
 
-  setTimeout(async ()=>{
-    await typeText(playerName+"░░░現在你永遠是我的了",220);
-  },5200);
+  // 偽安全 → 反轉
+  setTimeout(()=>{
+    textEl.innerText = playerName+"，你永遠是安全的";
+
+    setTimeout(()=>{
+      textEl.innerText = playerName+"░░░現在你永遠是我的了";
+    },800);
+
+  },5000);
 }
 
 // start
