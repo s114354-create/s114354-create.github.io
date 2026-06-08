@@ -107,7 +107,7 @@ const flow = [
       {t:"一定會", s:"defensive"},
       {t:"偶爾", s:"calm"},
       {t:"很少", s:"open"},
-      {t:"幾乎不會", s:"sensitive"}
+      {t:"心情不好的話一定會", s:"sensitive"}
     ]
   },
   { type:"msg", text:"有時候其實不用鎖" },
@@ -117,7 +117,7 @@ const flow = [
     text:"你有沒有覺得有人在看你？",
     c:[
       {t:"有", s:"sensitive"},
-      {t:"沒有", s:"calm"},
+      {t:"之前有", s:"calm"},
       {t:"偶爾", s:"open"},
       {t:"不確定", s:"defensive"}
     ]
@@ -258,7 +258,7 @@ function ending() {
 
   setTimeout(() => {
     textEl.style.color = "red";
-    typeText("現在你是我的了", 120);
+    typeText("現在你是我的了...", 120);
   }, 17000);
 
   setTimeout(() => {
