@@ -25,7 +25,6 @@ body {
 
 h2 {
   min-height: 60px;
-  transition: 0.3s;
 }
 
 button {
@@ -55,30 +54,99 @@ button:hover {
 </div>
 
 <script>
+/* 分類計分 */
+let score = {
+  calm: 0,
+  sensitive: 0,
+  defensive: 0,
+  open: 0
+};
+
+/* 題目流程 */
 const flow = [
-  { type:"q", text:"你比較常在哪種環境放鬆？", c:["安靜的地方","熱鬧的地方","自己房間","戶外"] },
+  {
+    type:"q",
+    text:"你比較常在哪種環境放鬆？",
+    c:[
+      {t:"安靜的地方", s:"calm"},
+      {t:"熱鬧的地方", s:"open"},
+      {t:"自己房間", s:"defensive"},
+      {t:"戶外", s:"sensitive"}
+    ]
+  },
   { type:"msg", text:"原來你是這種人" },
 
-  { type:"q", text:"你通常幾點睡？", c:["很早","普通","很晚","不固定"] },
+  {
+    type:"q",
+    text:"你通常幾點睡？",
+    c:[
+      {t:"很早", s:"calm"},
+      {t:"普通", s:"open"},
+      {t:"很晚", s:"sensitive"},
+      {t:"不固定", s:"defensive"}
+    ]
+  },
   { type:"msg", text:"難怪那個時間…" },
 
-  { type:"q", text:"有人默默關心你，你會？", c:["開心","不確定","覺得怪","無感"] },
+  {
+    type:"q",
+    text:"有人默默關心你，你會？",
+    c:[
+      {t:"開心", s:"open"},
+      {t:"不確定", s:"calm"},
+      {t:"覺得怪", s:"defensive"},
+      {t:"無感", s:"sensitive"}
+    ]
+  },
   { type:"msg", text:"我就是那樣的人" },
 
-  { type:"q", text:"你會鎖門嗎？", c:["一定會","偶爾","很少","幾乎不會"] },
+  {
+    type:"q",
+    text:"你會鎖門嗎？",
+    c:[
+      {t:"一定會", s:"defensive"},
+      {t:"偶爾", s:"calm"},
+      {t:"很少", s:"open"},
+      {t:"幾乎不會", s:"sensitive"}
+    ]
+  },
   { type:"msg", text:"有時候其實不用鎖" },
 
-  { type:"q", text:"你有沒有覺得有人在看你？", c:["有","沒有","偶爾","不確定"] },
+  {
+    type:"q",
+    text:"你有沒有覺得有人在看你？",
+    c:[
+      {t:"有", s:"sensitive"},
+      {t:"沒有", s:"calm"},
+      {t:"偶爾", s:"open"},
+      {t:"不確定", s:"defensive"}
+    ]
+  },
   { type:"msg", text:"你終於注意到了" },
 
-  { type:"q", text:"如果有人說「我一直在你身邊」，你覺得？", c:["浪漫","奇怪","可怕","不相信"] },
+  {
+    type:"q",
+    text:"如果有人說「我一直在你身邊」，你覺得？",
+    c:[
+      {t:"浪漫", s:"open"},
+      {t:"奇怪", s:"defensive"},
+      {t:"可怕", s:"sensitive"},
+      {t:"不相信", s:"calm"}
+    ]
+  },
   { type:"msg", text:"你選哪個…我都會在" },
 
-  { type:"q", text:"現在的你，是一個人嗎？", c:["是","不是"] }
+  {
+    type:"q",
+    text:"現在的你，是一個人嗎？",
+    c:[
+      {t:"是", s:"calm"},
+      {t:"不是", s:"sensitive"}
+    ]
+  }
 ];
 
 let step = 0;
-
 const textEl = document.getElementById("text");
 const choicesEl = document.getElementById("choices");
 
@@ -106,11 +174,13 @@ function show() {
 
     item.c.forEach(choice => {
       const btn = document.createElement("button");
-      btn.innerText = choice;
+      btn.innerText = choice.t;
 
-      btn.onclick = next;
+      btn.onclick = () => {
+        if (choice.s) score[choice.s]++;
+        next();
+      };
 
-      // 微抖動效果
       btn.onmouseover = () => {
         btn.style.transform = "translateX(" + (Math.random()*6) + "px)";
       };
@@ -140,45 +210,60 @@ function next() {
   }
 }
 
-/* 💀 最終結尾（完整版） */
+/* 計算結果 */
+function getResult() {
+  let max = "calm";
+  for (let k in score) {
+    if (score[k] > score[max]) max = k;
+  }
+  return max;
+}
+
+/* 💀 最終結尾 */
 function ending() {
   choicesEl.innerHTML = "";
 
   typeText("分析中...", 60);
 
-  setTimeout(() => typeText("分析你的作息...", 60), 1500);
-  setTimeout(() => typeText("同步你的習慣...", 60), 3000);
-  setTimeout(() => typeText("建立個人檔案...", 60), 4500);
+  setTimeout(() => typeText("分析你的選擇...", 60), 1500);
 
-  setTimeout(() => typeText("你給人的印象是冷靜又容易被注意", 50), 6500);
+  setTimeout(() => {
+    let r = getResult();
+    let txt = "";
 
-  setTimeout(() => typeText("但有件事很奇怪", 50), 9000);
+    if (r === "calm") txt = "你是理性型人格，習慣冷靜觀察一切";
+    if (r === "sensitive") txt = "你是敏感型人格，容易察覺細節與情緒";
+    if (r === "defensive") txt = "你是防備型人格，對外界保持距離";
+    if (r === "open") txt = "你是開放型人格，容易接受他人";
 
-  setTimeout(() => typeText("你的習慣、你的時間", 50), 11000);
+    typeText(txt, 50);
+  }, 3000);
 
-  setTimeout(() => typeText("都很好記", 50), 13000);
+  setTimeout(() => {
+    typeText("也因此…你更容易被注意到", 60);
+  }, 6000);
 
   setTimeout(() => {
     document.body.style.background = "#000";
     typeText("我已經看你很久了", 80);
-  }, 15000);
+  }, 9000);
 
   setTimeout(() => {
     typeText("現在…你還覺得自己是一個人嗎？", 80);
-  }, 18000);
+  }, 12000);
 
   setTimeout(() => {
     typeText("……", 200);
-  }, 21000);
+  }, 15000);
 
   setTimeout(() => {
     textEl.style.color = "red";
     typeText("現在你是我的了", 120);
-  }, 23000);
+  }, 17000);
 
   setTimeout(() => {
     typeText("現在你永遠是我的了", 150);
-  }, 26000);
+  }, 20000);
 }
 
 show();
