@@ -35,8 +35,9 @@ button,input{
   padding:8px;
 }
 
+/* glitch */
 .glitch{
-  animation:glitch 0.1s infinite;
+  animation: glitch 0.08s infinite;
 }
 
 @keyframes glitch{
@@ -44,10 +45,36 @@ button,input{
   50%{transform:translate(-1px,1px)}
   100%{transform:translate(1px,-1px)}
 }
+
+/* flicker */
+.flicker{
+  animation: flicker 0.15s infinite;
+}
+
+@keyframes flicker{
+  0%{opacity:1}
+  50%{opacity:0.4}
+  100%{opacity:1}
+}
+
+/* noise layer */
+#noise{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+  opacity:0.08;
+  background:url('https://media.giphy.com/media/oEI9uBYSzLpBK/giphy.gif');
+  display:none;
+}
 </style>
 </head>
 
 <body>
+
+<div id="noise"></div>
 
 <div id="game">
   <div id="text"></div>
@@ -62,21 +89,30 @@ const inputEl = document.getElementById("input");
 let playerName = "";
 let affection = 0;
 
+/* 💀 慢速 + 卡頓 */
 function typeText(text, speed=40){
   return new Promise(resolve=>{
-    textEl.innerText = "";
+    textEl.innerText="";
     let i=0;
-    let interval=setInterval(()=>{
-      textEl.innerText += text[i];
-      i++;
-      if(i>=text.length){
-        clearInterval(interval);
+
+    function typing(){
+      if(i < text.length){
+        textEl.innerText += text[i];
+
+        let randomDelay = Math.random()*speed*0.8;
+        setTimeout(typing, speed + randomDelay);
+
+        i++;
+      }else{
         resolve();
       }
-    },speed);
+    }
+
+    typing();
   });
 }
 
+/* 選項 */
 function showChoices(choices){
   inputEl.innerHTML="";
   choices.forEach(c=>{
@@ -90,6 +126,7 @@ function showChoices(choices){
   });
 }
 
+/* 名字 */
 function askName(){
   textEl.innerText="告訴我你的名字…";
   inputEl.innerHTML='<input id="nameInput"><button onclick="saveName()">確定</button>';
@@ -101,6 +138,35 @@ function saveName(){
   scene1();
 }
 
+/* 💀 污染 */
+function corruptText(level=1){
+
+  if(level===1){
+    textEl.classList.add("glitch");
+  }
+
+  if(level===2){
+    textEl.classList.add("glitch","flicker");
+
+    let original = textEl.innerText;
+    textEl.innerText = original.split("").map(c=>{
+      return Math.random()<0.15 ? "░" : c;
+    }).join("");
+  }
+
+  if(level===3){
+    document.getElementById("noise").style.display="block";
+
+    let glitchInterval = setInterval(()=>{
+      document.body.style.background =
+        Math.random()>0.5 ? "#000" : "#111";
+    },80);
+
+    setTimeout(()=>clearInterval(glitchInterval),2000);
+  }
+}
+
+/* 💀 jump scare */
 function jumpScare(msg){
   textEl.innerText=msg;
   textEl.style.fontSize="42px";
@@ -109,7 +175,6 @@ function jumpScare(msg){
 
   document.body.style.background="#fff";
 
-  // 嘗試音效（瀏覽器可能擋）
   let audio = new Audio("https://www.soundjay.com/human/sounds/scream-01.mp3");
   audio.play().catch(()=>{});
 
@@ -117,14 +182,17 @@ function jumpScare(msg){
     document.body.style.background="#000";
     textEl.style.fontSize="20px";
     textEl.style.color="#0f0";
-    textEl.classList.remove("glitch");
   },150);
 }
 
+/* 🟢 開始 */
 async function scene1(){
-  await typeText("開始測驗...");
-  await typeText("現在時間是："+new Date().toLocaleTimeString(),30);
-  await typeText("你一個人在房間時會？");
+  await typeText("開始測驗...",40);
+  await typeText("現在時間是："+new Date().toLocaleTimeString(),35);
+
+  await new Promise(r=>setTimeout(r,500));
+
+  await typeText("你一個人在房間時會？",60);
 
   showChoices([
     {text:"滑手機",affection:1,next:scene2},
@@ -133,8 +201,9 @@ async function scene1(){
   ]);
 }
 
+/* 🟡 中段 */
 async function scene2(){
-  await typeText("如果有人一直看著你？");
+  await typeText("如果有人一直看著你？",80);
 
   showChoices([
     {text:"無視",affection:1,next:scene3},
@@ -143,8 +212,9 @@ async function scene2(){
   ]);
 }
 
+/* 🔴 異常 */
 async function scene3(){
-  await typeText("你相信『被注視』嗎？");
+  await typeText("你相信『被注視』嗎？",100);
 
   showChoices([
     {text:"不信",affection:1,next:ending},
@@ -153,37 +223,52 @@ async function scene3(){
   ]);
 }
 
+/* 💀 結尾 */
 async function ending(){
 
   inputEl.innerHTML="";
 
-  await typeText("分析中...",50);
-  await typeText("你的結果是：");
+  await typeText("分析中...",80);
+  await new Promise(r=>setTimeout(r,800));
+
+  await typeText("你的結果是：",100);
 
   if(affection<5){
-    await typeText("【普通型人格】");
+    await typeText("【普通型人格】",120);
   }else if(affection<9){
-    await typeText("【敏感型人格】");
+    await typeText("【敏感型人格】",140);
   }else{
-    await typeText("【連結型人格】");
+    await typeText("【連結型人格】",160);
   }
 
-  await typeText("..."+playerName+"…",120);
-  await typeText("你有沒有發現…",120);
-  await typeText("問題越來越不像測驗？",120);
+  await new Promise(r=>setTimeout(r,1200));
 
+  await typeText("..."+playerName+"…",140);
+  corruptText(1);
+
+  await new Promise(r=>setTimeout(r,1500));
+
+  await typeText("你有沒有發現…",160);
+  corruptText(2);
+
+  await new Promise(r=>setTimeout(r,1200));
+
+  await typeText("問題越來越不像測驗？",180);
+  corruptText(3);
+
+  // 💀 jump scare
   setTimeout(()=>{
+    corruptText(3);
     jumpScare(playerName+"，我就在你後面");
-  },1000);
+  },1200);
 
   setTimeout(async ()=>{
-    await typeText("…現在你是我的了",120);
-  },2500);
+    await typeText("…現在你是我的了",200);
+  },3000);
 
   setTimeout(async ()=>{
-    await typeText(playerName+"，現在你永遠是我的了",150);
-  },4500);
-
+    await typeText(playerName+"░░░現在你永遠是我的了",220);
+  },5200);
 }
 
 // start
