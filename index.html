@@ -2,52 +2,62 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>爆炸準心理測驗</title>
+<title>測驗</title>
 
 <style>
-body {
-  background: black;
-  color: white;
-  font-family: monospace;
-  text-align: center;
-  padding: 30px;
+body{
+  background:black;
+  color:white;
+  font-family:monospace;
+  text-align:center;
+  padding:30px;
 }
 
-button {
-  display: block;
-  margin: 10px auto;
-  padding: 10px;
-  background: #111;
-  color: white;
-  border: 1px solid #555;
-  cursor: pointer;
+#nameInputBox{
+  margin-top:100px;
 }
 
-button:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
+input{
+  padding:10px;
+  background:black;
+  color:white;
+  border:1px solid #555;
 }
 
-.glitch {
-  animation: shake 0.15s infinite;
-  color: red;
+button{
+  display:block;
+  margin:10px auto;
+  padding:10px;
+  background:#111;
+  color:white;
+  border:1px solid #555;
+  cursor:pointer;
 }
 
-@keyframes shake {
-  0% { transform: translate(1px,1px); }
-  50% { transform: translate(-1px,-2px); }
-  100% { transform: translate(1px,-1px); }
+button:disabled{
+  opacity:0.3;
 }
 
-#jumpscare {
-  position: fixed;
-  inset: 0;
-  background: black;
-  color: red;
-  font-size: 40px;
+.glitch{
+  animation:shake 0.15s infinite;
+  color:red;
+}
+
+@keyframes shake{
+  0%{transform:translate(1px,1px);}
+  50%{transform:translate(-1px,-2px);}
+  100%{transform:translate(1px,-1px);}
+}
+
+#jumpscare{
+  position:fixed;
+  inset:0;
   display:flex;
   justify-content:center;
   align-items:center;
+  font-size:40px;
+  color:red;
+  background:black;
   opacity:0;
   pointer-events:none;
   transition:0.2s;
@@ -56,6 +66,12 @@ button:disabled {
 </head>
 
 <body>
+
+<div id="nameInputBox">
+  <h2>輸入你的名字</h2>
+  <input id="nameInput">
+  <button id="startBtn">開始</button>
+</div>
 
 <div id="time"></div>
 <div id="nameDisplay"></div>
@@ -66,51 +82,53 @@ button:disabled {
 <div id="jumpscare">我在你後面</div>
 
 <script>
-let playerName = "";
-let corruption = 0;
-let locked = false; // 🔒 核心鎖
+let playerName="";
+let corruption=0;
+let score={rational:0,fear:0,attach:0};
+let step=0;
 
-let score = { rational:0, fear:0, attach:0 };
-let step = 0;
+const textEl=document.getElementById("text");
 
-const questions = [
-  { q:"晚上你通常在做什麼？",
-    c:[["滑手機","attach"],["工作","rational"],["發呆","fear"]] },
-  { q:"你聽到奇怪聲音時會？",
-    c:[["去查看","rational"],["躲起來","fear"],["找人聊天","attach"]] },
-  { q:"你覺得有人在看你嗎？",
-    c:[["沒有","rational"],["可能有","fear"],["希望有","attach"]] },
-  { q:"如果有人一直陪你，你會？",
-    c:[["接受","attach"],["拒絕","rational"],["害怕","fear"]] }
+const questions=[
+{q:"晚上你通常在做什麼？",
+ c:[["滑手機","attach"],["工作","rational"],["發呆","fear"]]},
+{q:"你聽到奇怪聲音時會？",
+ c:[["去查看","rational"],["躲起來","fear"],["找人聊天","attach"]]},
+{q:"你覺得有人在看你嗎？",
+ c:[["沒有","rational"],["可能有","fear"],["希望有","attach"]]},
+{q:"如果有人一直陪你，你會？",
+ c:[["接受","attach"],["拒絕","rational"],["害怕","fear"]]}
 ];
 
-// ✅ 打字（回傳 Promise → 確保跑完才繼續）
-function typeText(text, el, speed=40){
+// ✅ 打字（不卡版）
+function typeText(text,el,speed=40){
   return new Promise(resolve=>{
-    el.innerHTML = "";
-    let i = 0;
-    let timer = setInterval(()=>{
-      el.innerHTML += text[i];
+    el.innerHTML="";
+    let i=0;
+    let t=setInterval(()=>{
+      el.innerHTML+=text[i];
       i++;
       if(i>=text.length){
-        clearInterval(timer);
+        clearInterval(t);
         resolve();
       }
-    }, speed);
+    },speed);
   });
 }
 
+// 名字打字
 function typeName(name){
-  let el = document.getElementById("nameDisplay");
-  el.innerHTML = "使用者：";
+  let el=document.getElementById("nameDisplay");
+  el.innerHTML="使用者：";
   let i=0;
-  let timer=setInterval(()=>{
-    el.innerHTML += name[i];
+  let t=setInterval(()=>{
+    el.innerHTML+=name[i];
     i++;
-    if(i>=name.length) clearInterval(timer);
+    if(i>=name.length) clearInterval(t);
   },120);
 }
 
+// 名字污染
 function corruptName(name){
   if(corruption>=6) return "我找到你了";
   if(corruption>=4) return "你";
@@ -121,39 +139,37 @@ function corruptName(name){
 }
 
 function updateName(){
-  document.getElementById("nameDisplay").innerText =
-    "使用者：" + corruptName(playerName);
+  document.getElementById("nameDisplay").innerText=
+    "使用者："+corruptName(playerName);
 }
 
+// 時間污染
 function updateTime(){
-  const now = new Date();
-  let t = now.toLocaleTimeString();
+  let t=new Date().toLocaleTimeString();
 
   if(corruption>=2){
-    t = t.replace(/\d/g,()=>Math.random()>0.7?"?":Math.floor(Math.random()*10));
+    t=t.replace(/\d/g,()=>Math.random()>0.7?"?":Math.floor(Math.random()*10));
   }
   if(corruption>=4){
-    t = t.replace(/:/g," ");
+    t=t.replace(/:/g," ");
   }
   if(corruption>=6){
-    t = "--:--:--";
+    t="--:--:--";
   }
 
-  document.getElementById("time").innerText = "現在時間："+t;
+  document.getElementById("time").innerText="現在時間："+t;
 }
 setInterval(updateTime,1000);
 
+// jump scare
 function jumpScare(){
-  let j = document.getElementById("jumpscare");
-  j.style.opacity = 1;
-  setTimeout(()=>{ j.style.opacity=0; },250);
+  let j=document.getElementById("jumpscare");
+  j.style.opacity=1;
+  setTimeout(()=>j.style.opacity=0,250);
 }
 
-// ✅ 主流程（完全同步控制）
+// 顯示題目（完全不卡）
 async function nextQuestion(){
-
-  if(locked) return; // 🔒 防重複
-  locked = true;
 
   updateName();
 
@@ -161,55 +177,50 @@ async function nextQuestion(){
     document.body.classList.add("glitch");
   }
 
-  if(step >= questions.length){
-    await ending();
+  if(step>=questions.length){
+    ending();
     return;
   }
 
-  let q = questions[step];
+  let q=questions[step];
 
-  await typeText(q.q, document.getElementById("text"));
+  await typeText(q.q,textEl);
 
-  let choices = document.getElementById("choices");
-  choices.innerHTML = "";
+  let box=document.getElementById("choices");
+  box.innerHTML="";
 
-  q.c.forEach(c=>{
-    let btn = document.createElement("button");
-    btn.innerText = c[0];
+  q.c.forEach(([label,type])=>{
+    let btn=document.createElement("button");
+    btn.innerText=label;
 
-    btn.onclick = async ()=>{
+    btn.onclick=async()=>{
 
-      if(locked === false) return;
-
-      // 🔒 點下去立即鎖全部
+      // 🔒 禁止重點
       document.querySelectorAll("button").forEach(b=>b.disabled=true);
 
-      score[c[1]]++;
+      score[type]++;
       corruption++;
       step++;
 
-      // 🎭 插入事件
       if(corruption===3){
-        await typeText("奇怪…時間是不是不太對？", text);
+        await typeText("奇怪…時間是不是不太對？",textEl);
       }
 
       if(corruption===5){
         jumpScare();
-        await typeText("你剛剛有看到嗎？", text);
+        await typeText("你剛剛有看到嗎？",textEl);
       }
 
-      choices.innerHTML = "";
+      box.innerHTML="";
 
-      locked = false; // 🔓 解鎖
       nextQuestion();
     };
 
-    choices.appendChild(btn);
+    box.appendChild(btn);
   });
-
-  locked = false; // 🔓 顯示完題目才解鎖
 }
 
+// 結局
 async function ending(){
   let t="";
 
@@ -226,16 +237,29 @@ async function ending(){
     t="我讀不懂你\n\n但沒關係\n\n我可以慢慢看";
   }
 
-  await typeText(t, document.getElementById("text"),60);
+  await typeText(t,textEl,60);
 }
 
-function start(){
-  playerName = prompt("輸入你的名字");
+// 開始
+document.getElementById("startBtn").onclick=async()=>{
+
+  let input=document.getElementById("nameInput").value.trim();
+
+  if(!input){
+    alert("請輸入名字");
+    return;
+  }
+
+  playerName=input;
+
+  document.getElementById("nameInputBox").style.display="none";
+
   typeName(playerName);
-  setTimeout(()=>{ nextQuestion(); },1000);
-}
 
-start();
+  await typeText("正在記錄你的資料…",textEl);
+
+  setTimeout(()=>nextQuestion(),800);
+};
 </script>
 
 </body>
