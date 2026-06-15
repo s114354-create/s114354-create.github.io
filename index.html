@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>心理測驗</title>
+<title>你是怎樣的人呢</title>
 
 <style>
 body{
@@ -19,20 +19,12 @@ body{
   min-height:60px;
 }
 
-button{
+button,input{
   background:black;
   color:#0f0;
   border:1px solid #0f0;
   padding:10px;
   margin:10px;
-  cursor:pointer;
-}
-
-input{
-  background:black;
-  color:#0f0;
-  border:1px solid #0f0;
-  padding:10px;
 }
 
 .glitch{
@@ -59,7 +51,7 @@ let choicesEl=document.getElementById("choices");
 let playerName="";
 let affection=0;
 
-// 🧠 打字效果（慢）
+// 🧠 打字
 async function typeText(text,speed=80){
   textEl.innerText="";
   for(let i=0;i<text.length;i++){
@@ -68,7 +60,7 @@ async function typeText(text,speed=80){
   }
 }
 
-// 🧠 名字逐字出現
+// 🧠 名字慢慢出現
 async function typeName(name){
   textEl.innerText="";
   for(let i=0;i<name.length;i++){
@@ -77,7 +69,7 @@ async function typeName(name){
   }
 }
 
-// 🧠 顯示選項
+// 🧠 選項
 function showChoices(arr){
   choicesEl.innerHTML="";
   arr.forEach(c=>{
@@ -105,7 +97,32 @@ function corruptText(level=1){
   },100);
 }
 
-// 💀 jump scare
+// ⚡ 閃光嚇人
+function flashJumpScare(){
+  let flash=document.createElement("div");
+  flash.style.position="fixed";
+  flash.style.top="0";
+  flash.style.left="0";
+  flash.style.width="100%";
+  flash.style.height="100%";
+  flash.style.background="white";
+  flash.style.zIndex="9999";
+  document.body.appendChild(flash);
+
+  setTimeout(()=>{
+    flash.style.background="red";
+    textEl.innerText="不要回頭";
+    textEl.style.color="red";
+    textEl.classList.add("glitch");
+  },80);
+
+  setTimeout(()=>{
+    flash.remove();
+    textEl.style.color="#0f0";
+  },200);
+}
+
+// 💀 文字嚇人
 function jumpScare(){
   textEl.innerText="你後面有人";
   textEl.classList.add("glitch");
@@ -124,26 +141,23 @@ async function fakeFreeze(){
 
 // 🧠 時間
 function getTime(){
-  let d=new Date();
-  return d.toLocaleTimeString();
+  return new Date().toLocaleTimeString();
 }
 
 // 🟢 開始
 async function start(){
   await typeText("請輸入你的名字");
-  
   choicesEl.innerHTML='<input id="nameInput"><button onclick="submitName()">確定</button>';
 }
 
 async function submitName(){
   playerName=document.getElementById("nameInput").value;
   choicesEl.innerHTML="";
-  
+
   await typeText("正在讀取...");
   await new Promise(r=>setTimeout(r,1000));
 
   await typeName(playerName);
-
   await new Promise(r=>setTimeout(r,500));
 
   await typeText(playerName+"，現在時間是 "+getTime());
@@ -151,7 +165,7 @@ async function submitName(){
   scene1();
 }
 
-// 🟢 問題開始（前正常）
+// 🟢 正常 → 異常
 
 async function scene1(){
   await typeText("你平常喜歡做什麼？");
@@ -171,7 +185,6 @@ async function scene2(){
   ]);
 }
 
-// ❤️ 混一點戀愛
 async function scene3(){
   await typeText("如果有人一直關注你，你會？");
   showChoices([
@@ -181,102 +194,102 @@ async function scene3(){
   ]);
 }
 
-// 🟠 開始怪
 async function scene4(){
-  await typeText("你有沒有覺得，手機有時候自己亮？",110);
+  await typeText("你有沒有覺得，手機會自己亮？");
   showChoices([
-    {text:"沒有",affection:1,next:scene5},
-    {text:"好像有",affection:3,next:scene5},
-    {text:"常常",affection:5,next:scene5}
+    {text:"沒有",next:scene5},
+    {text:"好像有",next:scene5},
+    {text:"常常",next:scene5}
   ]);
 }
 
 async function scene5(){
   await new Promise(r=>setTimeout(r,2000));
-  await typeText("你現在，是一個人嗎？",130);
+  await typeText("你現在，是一個人嗎？");
   showChoices([
-    {text:"是",affection:2,next:scene6},
-    {text:"不是",affection:3,next:scene6},
-    {text:"不知道",affection:6,next:scene6}
+    {text:"是",next:scene6},
+    {text:"不是",next:scene6},
+    {text:"不知道",next:scene6}
   ]);
 }
 
+// ⚡ 第一次嚇
 async function scene6(){
-  await typeText("你剛剛，有回頭看嗎？",150);
+  await typeText("你剛剛，有回頭看嗎？");
+
+  setTimeout(()=>flashJumpScare(),500);
+
   showChoices([
-    {text:"沒有",affection:2,next:scene7},
-    {text:"有",affection:5,next:scene7},
-    {text:"為什麼問",affection:6,next:scene7}
+    {text:"沒有",next:scene7},
+    {text:"有",next:scene7},
+    {text:"為什麼問",next:scene7}
   ]);
 }
 
 async function scene7(){
-  await typeText("你剛剛是不是選了某個答案…");
-  await new Promise(r=>setTimeout(r,1500));
-  await typeText("我有看到");
+  await typeText("我有看到你剛剛的選擇");
   showChoices([
-    {text:"你怎麼知道",affection:6,next:scene8},
-    {text:"巧合吧",affection:2,next:scene8},
-    {text:"……",affection:5,next:scene8}
+    {text:"你怎麼知道",next:scene8},
+    {text:"巧合吧",next:scene8},
+    {text:"……",next:scene8}
   ]);
 }
 
 async function scene8(){
   hideCursor();
-  await typeText("其實這不是測驗");
-  await new Promise(r=>setTimeout(r,1200));
-  await typeText("是篩選");
+  await typeText("這不是測驗，是篩選");
   showChoices([
-    {text:"篩選什麼",affection:5,next:scene9},
-    {text:"不好笑",affection:2,next:scene9},
-    {text:"我要關掉",affection:6,next:scene9}
+    {text:"篩選什麼",next:scene9},
+    {text:"不好笑",next:scene9},
+    {text:"我要關掉",next:scene9}
   ]);
 }
 
+// ⚡ 第二次嚇 + 污染
 async function scene9(){
-  await typeText("畫面開始怪怪的？",180);
+  await typeText("畫面開始怪怪的？");
   corruptText(2);
+
+  setTimeout(()=>flashJumpScare(),800);
+
   showChoices([
-    {text:"有",affection:5,next:scene10},
-    {text:"沒有",affection:2,next:scene10},
-    {text:"停止",affection:7,next:scene10}
+    {text:"有",next:scene10},
+    {text:"沒有",next:scene10},
+    {text:"停止",next:scene10}
   ]);
 }
 
 async function scene10(){
   await fakeFreeze();
-  await typeText("如果你現在關掉這個頁面…");
-  await new Promise(r=>setTimeout(r,1800));
-  await typeText("你覺得會發生什麼？");
+  await typeText("如果你關掉這個頁面…會怎樣？");
 
   showChoices([
-    {text:"沒事",affection:2,next:ending},
-    {text:"有點怕",affection:5,next:ending},
-    {text:"你會跟來",affection:8,next:ending}
+    {text:"沒事",next:ending},
+    {text:"有點怕",next:ending},
+    {text:"你會跟來",next:ending}
   ]);
 }
 
-// 💀 結局
+// ⚡ 最終
 async function ending(){
   choicesEl.innerHTML="";
   textEl.classList.add("glitch");
 
-  await typeText("分析中...",150);
+  await typeText("分析中...");
 
-  await new Promise(r=>setTimeout(r,1500));
+  flashJumpScare();
+
+  await new Promise(r=>setTimeout(r,1200));
 
   await typeText(playerName+"，結果已確定");
-
-  await new Promise(r=>setTimeout(r,1000));
 
   jumpScare();
 
   await new Promise(r=>setTimeout(r,1000));
 
-  await typeText("現在你永遠是我的了",200);
+  await typeText("現在你永遠是我的了");
 }
 
-// 啟動
 start();
 </script>
 
