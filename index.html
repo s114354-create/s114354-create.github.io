@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>沉香辭世甲</title>
+<title>沉香辭世甲喵嗚嘻</title>
 
 <style>
 body{
@@ -49,7 +49,6 @@ let textEl=document.getElementById("text");
 let choicesEl=document.getElementById("choices");
 
 let playerName="";
-let affection=0;
 let lastChoiceText="";
 
 // 🐢 打字
@@ -78,7 +77,6 @@ function showChoices(arr){
     btn.innerText=c.text;
     btn.onclick=()=>{
       lastChoiceText=c.text;
-      affection+=c.affection||0;
       c.next();
     };
     choicesEl.appendChild(btn);
@@ -125,11 +123,11 @@ function flashJumpScare(){
 
   flash.style.background="white";
   flash.style.color="black";
-  flash.innerText=playerName+"，不要回頭";
+  flash.innerText=playerName+"我一直都愛著你";
 
   setTimeout(()=>{
     flash.style.background="red";
-    flash.innerText="我一直都愛你";
+    flash.innerText="我一直在等你";
   },180);
 
   setTimeout(()=>{
@@ -148,12 +146,6 @@ function glitchCursor(){
   setInterval(()=>{
     document.body.style.cursor=Math.random()>0.5?"none":"default";
   },250);
-}
-
-// 💀 簡嚇
-function jumpScare(){
-  textEl.innerText="你後面有人";
-  textEl.classList.add("glitch");
 }
 
 // ⏳ 假當機
@@ -220,6 +212,7 @@ function blackScreen(){
   black.style.background="black";
   black.style.zIndex="9999";
   document.body.appendChild(black);
+  return black;
 }
 
 function getTime(){
@@ -247,8 +240,7 @@ async function submitName(){
   scene1();
 }
 
-// 🟢 流程（略微保留原邏輯）
-
+// 🟢 流程
 async function scene1(){
   await typeText("你平常喜歡做什麼？");
   showChoices([
@@ -346,7 +338,7 @@ async function scene10(){
   ]);
 }
 
-// ☠️ 結尾（已整合新效果）
+// ☠️ 終極收尾
 async function ending(){
   choicesEl.innerHTML="";
   textEl.classList.add("glitch");
@@ -359,8 +351,9 @@ async function ending(){
   flashJumpScare();
 
   await typeText(playerName+"，你的結果是：");
-  await typeText("『適合被持續觀察的人』");
+  await typeText("『適合被我擁有的人』");
 
+  await new Promise(r=>setTimeout(r,1000));
   await typeText("現在你永遠是我的了");
 
   // 📺 雜訊
@@ -369,15 +362,37 @@ async function ending(){
 
   // ⚡ 大閃
   bigFlash();
-
   clearInterval(interval);
   noise.remove();
 
   // 🌑 黑屏
-  blackScreen();
-  await new Promise(r=>setTimeout(r,2000));
+  let black = blackScreen();
+
+  // ⏳ 完全靜止
+  await new Promise(r=>setTimeout(r,5000));
+
+  // 👁 黑畫面文字
+  let whisper=document.createElement("div");
+  whisper.style.position="fixed";
+  whisper.style.top="50%";
+  whisper.style.left="50%";
+  whisper.style.transform="translate(-50%,-50%)";
+  whisper.style.color="white";
+  whisper.style.fontSize="22px";
+  whisper.style.zIndex="10000";
+  whisper.style.fontFamily="monospace";
+  whisper.innerText="你還在看嗎？";
+  document.body.appendChild(whisper);
+
+  await new Promise(r=>setTimeout(r,2500));
+
+  whisper.innerText="";
+  await new Promise(r=>setTimeout(r,1500));
 
   // 🧊 收尾
+  black.remove();
+  whisper.remove();
+
   textEl.classList.remove("glitch");
   textEl.innerText="";
   await typeText("感謝遊玩");
