@@ -52,7 +52,7 @@ let playerName="";
 let affection=0;
 let lastChoiceText="";
 
-// 🐢 慢速打字（不規則）
+// 🐢 打字
 async function typeText(text, baseSpeed=90){
   textEl.innerText="";
   for(let i=0;i<text.length;i++){
@@ -63,7 +63,6 @@ async function typeText(text, baseSpeed=90){
   }
 }
 
-// 🧠 名字慢慢出現
 async function typeName(name){
   textEl.innerText="";
   for(let i=0;i<name.length;i++){
@@ -72,7 +71,6 @@ async function typeName(name){
   }
 }
 
-// 🧠 選項（記住選擇）
 function showChoices(arr){
   choicesEl.innerHTML="";
   arr.forEach(c=>{
@@ -87,7 +85,7 @@ function showChoices(arr){
   });
 }
 
-// 💀 污染（降低強度避免太快壞）
+// 💀 污染
 function corruptText(level=1){
   let chars="█▓▒░<>/\\!?";
   setInterval(()=>{
@@ -101,7 +99,6 @@ function corruptText(level=1){
   },120);
 }
 
-// 💀 文字變異（慢速）
 function mutateText(){
   setInterval(()=>{
     let t=textEl.innerText;
@@ -109,7 +106,7 @@ function mutateText(){
   },1200);
 }
 
-// ⚡ 閃光（名字＋多段）
+// ⚡ 閃
 function flashJumpScare(){
   let flash=document.createElement("div");
   flash.style.position="fixed";
@@ -132,7 +129,7 @@ function flashJumpScare(){
 
   setTimeout(()=>{
     flash.style.background="red";
-    flash.innerText="我一直在看你";
+    flash.innerText="我一直都愛你";
   },180);
 
   setTimeout(()=>{
@@ -146,14 +143,14 @@ function flashJumpScare(){
   },650);
 }
 
-// 👁 游標異常
+// 👁 游標
 function glitchCursor(){
   setInterval(()=>{
     document.body.style.cursor=Math.random()>0.5?"none":"default";
   },250);
 }
 
-// 💀 jump scare
+// 💀 簡嚇
 function jumpScare(){
   textEl.innerText="你後面有人";
   textEl.classList.add("glitch");
@@ -171,7 +168,60 @@ async function fakeFreeze(){
   await new Promise(r=>setTimeout(r,1000));
 }
 
-// 🧠 時間
+// 📺 雜訊
+function noiseScreen(){
+  let noise=document.createElement("div");
+  noise.style.position="fixed";
+  noise.style.top="0";
+  noise.style.left="0";
+  noise.style.width="100%";
+  noise.style.height="100%";
+  noise.style.background="black";
+  noise.style.color="#0f0";
+  noise.style.fontSize="10px";
+  noise.style.whiteSpace="pre-wrap";
+  noise.style.zIndex="9998";
+  document.body.appendChild(noise);
+
+  let chars="█▓▒░";
+  let interval=setInterval(()=>{
+    let content="";
+    for(let i=0;i<1000;i++){
+      content+=chars[Math.floor(Math.random()*chars.length)];
+    }
+    noise.innerText=content;
+  },50);
+
+  return {noise, interval};
+}
+
+// ⚡ 大閃
+function bigFlash(){
+  let flash=document.createElement("div");
+  flash.style.position="fixed";
+  flash.style.top="0";
+  flash.style.left="0";
+  flash.style.width="100%";
+  flash.style.height="100%";
+  flash.style.background="white";
+  flash.style.zIndex="9999";
+  document.body.appendChild(flash);
+  setTimeout(()=>flash.remove(),150);
+}
+
+// 🌑 黑屏
+function blackScreen(){
+  let black=document.createElement("div");
+  black.style.position="fixed";
+  black.style.top="0";
+  black.style.left="0";
+  black.style.width="100%";
+  black.style.height="100%";
+  black.style.background="black";
+  black.style.zIndex="9999";
+  document.body.appendChild(black);
+}
+
 function getTime(){
   return new Date().toLocaleTimeString();
 }
@@ -197,7 +247,7 @@ async function submitName(){
   scene1();
 }
 
-// 🟢 問題流程
+// 🟢 流程（略微保留原邏輯）
 
 async function scene1(){
   await typeText("你平常喜歡做什麼？");
@@ -236,7 +286,6 @@ async function scene4(){
 }
 
 async function scene5(){
-  await new Promise(r=>setTimeout(r,2000));
   await typeText("你現在，是一個人嗎？");
   showChoices([
     {text:"是",next:scene6},
@@ -245,11 +294,9 @@ async function scene5(){
   ]);
 }
 
-// ⚡ 第一次嚇
 async function scene6(){
   await typeText("你剛剛，有回頭看嗎？");
   setTimeout(()=>flashJumpScare(),900);
-
   showChoices([
     {text:"沒有",next:scene7},
     {text:"有",next:scene7},
@@ -257,12 +304,9 @@ async function scene6(){
   ]);
 }
 
-// 🧠 記住選擇
 async function scene7(){
   await typeText("你剛剛選了「"+lastChoiceText+"」");
-  await new Promise(r=>setTimeout(r,1200));
   await typeText("不要再亂選了");
-
   showChoices([
     {text:"你怎麼知道",next:scene8},
     {text:"巧合吧",next:scene8},
@@ -270,7 +314,6 @@ async function scene7(){
   ]);
 }
 
-// 👁 游標異常
 async function scene8(){
   glitchCursor();
   await typeText("這不是測驗，是篩選");
@@ -281,14 +324,11 @@ async function scene8(){
   ]);
 }
 
-// ⚡ 第二次嚇 + 污染
 async function scene9(){
   await typeText("畫面開始怪怪的？");
   corruptText(1.5);
   mutateText();
-
   setTimeout(()=>flashJumpScare(),1200);
-
   showChoices([
     {text:"有",next:scene10},
     {text:"沒有",next:scene10},
@@ -296,11 +336,9 @@ async function scene9(){
   ]);
 }
 
-// ⏳ 當機
 async function scene10(){
   await fakeFreeze();
   await typeText("如果你關掉這個頁面…會怎樣？");
-
   showChoices([
     {text:"沒事",next:ending},
     {text:"有點怕",next:ending},
@@ -308,7 +346,7 @@ async function scene10(){
   ]);
 }
 
-// ☠️ 結尾
+// ☠️ 結尾（已整合新效果）
 async function ending(){
   choicesEl.innerHTML="";
   textEl.classList.add("glitch");
@@ -316,40 +354,33 @@ async function ending(){
   await typeText("分析中...");
   await new Promise(r=>setTimeout(r,2000));
 
-  await typeText("正在比對資料...");
-  await new Promise(r=>setTimeout(r,1800));
-
   await typeText("已找到匹配對象");
 
   flashJumpScare();
 
   await typeText(playerName+"，你的結果是：");
-  await new Promise(r=>setTimeout(r,1500));
-
   await typeText("『適合被持續觀察的人』");
-  await new Promise(r=>setTimeout(r,2000));
-
-  await typeText("這不是測驗");
-  await new Promise(r=>setTimeout(r,1500));
-
-  await typeText("從一開始就不是");
-  await new Promise(r=>setTimeout(r,2000));
-
-  await typeText("你是自己走進來的");
-  await new Promise(r=>setTimeout(r,2000));
-
-  jumpScare();
-
-  await new Promise(r=>setTimeout(r,1200));
-
-  await typeText(playerName+"...");
-  await new Promise(r=>setTimeout(r,1500));
-
-  await typeText("你已經離不開了");
-
-  await new Promise(r=>setTimeout(r,3000));
 
   await typeText("現在你永遠是我的了");
+
+  // 📺 雜訊
+  let {noise, interval} = noiseScreen();
+  await new Promise(r=>setTimeout(r,1500));
+
+  // ⚡ 大閃
+  bigFlash();
+
+  clearInterval(interval);
+  noise.remove();
+
+  // 🌑 黑屏
+  blackScreen();
+  await new Promise(r=>setTimeout(r,2000));
+
+  // 🧊 收尾
+  textEl.classList.remove("glitch");
+  textEl.innerText="";
+  await typeText("感謝遊玩");
 }
 
 start();
