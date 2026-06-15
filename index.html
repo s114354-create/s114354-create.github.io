@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>你是怎樣的人呢</title>
+<title>沉香辭世甲</title>
 
 <style>
 body{
@@ -28,7 +28,7 @@ button,input{
 }
 
 .glitch{
-  animation:glitch 0.1s infinite;
+  animation:glitch 0.15s infinite;
 }
 
 @keyframes glitch{
@@ -50,13 +50,16 @@ let choicesEl=document.getElementById("choices");
 
 let playerName="";
 let affection=0;
+let lastChoiceText="";
 
-// 🧠 打字
-async function typeText(text,speed=80){
+// 🐢 慢速打字（不規則）
+async function typeText(text, baseSpeed=90){
   textEl.innerText="";
   for(let i=0;i<text.length;i++){
     textEl.innerText+=text[i];
-    await new Promise(r=>setTimeout(r,speed));
+    let randomDelay=Math.random()*120;
+    let extraDelay=/[，。！？…]/.test(text[i])?300:0;
+    await new Promise(r=>setTimeout(r, baseSpeed+randomDelay+extraDelay));
   }
 }
 
@@ -69,35 +72,44 @@ async function typeName(name){
   }
 }
 
-// 🧠 選項
+// 🧠 選項（記住選擇）
 function showChoices(arr){
   choicesEl.innerHTML="";
   arr.forEach(c=>{
     let btn=document.createElement("button");
     btn.innerText=c.text;
     btn.onclick=()=>{
-      affection+=c.affection;
+      lastChoiceText=c.text;
+      affection+=c.affection||0;
       c.next();
     };
     choicesEl.appendChild(btn);
   });
 }
 
-// 💀 污染
+// 💀 污染（降低強度避免太快壞）
 function corruptText(level=1){
   let chars="█▓▒░<>/\\!?";
   setInterval(()=>{
     let t=textEl.innerText.split("");
     for(let i=0;i<t.length;i++){
-      if(Math.random()<0.05*level){
+      if(Math.random()<0.02*level){
         t[i]=chars[Math.floor(Math.random()*chars.length)];
       }
     }
     textEl.innerText=t.join("");
-  },100);
+  },120);
 }
 
-// ⚡ 閃光嚇人
+// 💀 文字變異（慢速）
+function mutateText(){
+  setInterval(()=>{
+    let t=textEl.innerText;
+    textEl.innerText=t.replace(/你/g,"我");
+  },1200);
+}
+
+// ⚡ 閃光（名字＋多段）
 function flashJumpScare(){
   let flash=document.createElement("div");
   flash.style.position="fixed";
@@ -105,38 +117,58 @@ function flashJumpScare(){
   flash.style.left="0";
   flash.style.width="100%";
   flash.style.height="100%";
-  flash.style.background="white";
+  flash.style.display="flex";
+  flash.style.alignItems="center";
+  flash.style.justifyContent="center";
+  flash.style.fontSize="40px";
+  flash.style.fontWeight="bold";
   flash.style.zIndex="9999";
+
   document.body.appendChild(flash);
+
+  flash.style.background="white";
+  flash.style.color="black";
+  flash.innerText=playerName+"，不要回頭";
 
   setTimeout(()=>{
     flash.style.background="red";
-    textEl.innerText="不要回頭";
-    textEl.style.color="red";
-    textEl.classList.add("glitch");
-  },80);
+    flash.innerText="我一直在看你";
+  },180);
+
+  setTimeout(()=>{
+    flash.style.background="black";
+    flash.style.color="red";
+    flash.innerText="你逃不掉";
+  },360);
 
   setTimeout(()=>{
     flash.remove();
-    textEl.style.color="#0f0";
-  },200);
+  },650);
 }
 
-// 💀 文字嚇人
+// 👁 游標異常
+function glitchCursor(){
+  setInterval(()=>{
+    document.body.style.cursor=Math.random()>0.5?"none":"default";
+  },250);
+}
+
+// 💀 jump scare
 function jumpScare(){
   textEl.innerText="你後面有人";
   textEl.classList.add("glitch");
 }
 
-// 💀 游標消失
-function hideCursor(){
-  document.body.style.cursor="none";
-}
-
-// 💀 假當機
+// ⏳ 假當機
 async function fakeFreeze(){
-  textEl.innerText="...";
-  await new Promise(r=>setTimeout(r,3000));
+  textEl.innerText="載入中.";
+  await new Promise(r=>setTimeout(r,800));
+  textEl.innerText="載入中..";
+  await new Promise(r=>setTimeout(r,800));
+  textEl.innerText="載入中...";
+  await new Promise(r=>setTimeout(r,2000));
+  textEl.innerText="錯誤";
+  await new Promise(r=>setTimeout(r,1000));
 }
 
 // 🧠 時間
@@ -165,32 +197,32 @@ async function submitName(){
   scene1();
 }
 
-// 🟢 正常 → 異常
+// 🟢 問題流程
 
 async function scene1(){
   await typeText("你平常喜歡做什麼？");
   showChoices([
-    {text:"滑手機",affection:2,next:scene2},
-    {text:"睡覺",affection:1,next:scene2},
-    {text:"發呆",affection:3,next:scene2}
+    {text:"滑手機",next:scene2},
+    {text:"睡覺",next:scene2},
+    {text:"發呆",next:scene2}
   ]);
 }
 
 async function scene2(){
   await typeText("你相信巧合嗎？");
   showChoices([
-    {text:"相信",affection:3,next:scene3},
-    {text:"不信",affection:1,next:scene3},
-    {text:"看情況",affection:2,next:scene3}
+    {text:"相信",next:scene3},
+    {text:"不信",next:scene3},
+    {text:"看情況",next:scene3}
   ]);
 }
 
 async function scene3(){
   await typeText("如果有人一直關注你，你會？");
   showChoices([
-    {text:"開心",affection:4,next:scene4},
-    {text:"不舒服",affection:2,next:scene4},
-    {text:"無所謂",affection:3,next:scene4}
+    {text:"開心",next:scene4},
+    {text:"不舒服",next:scene4},
+    {text:"無所謂",next:scene4}
   ]);
 }
 
@@ -216,8 +248,7 @@ async function scene5(){
 // ⚡ 第一次嚇
 async function scene6(){
   await typeText("你剛剛，有回頭看嗎？");
-
-  setTimeout(()=>flashJumpScare(),500);
+  setTimeout(()=>flashJumpScare(),900);
 
   showChoices([
     {text:"沒有",next:scene7},
@@ -226,8 +257,12 @@ async function scene6(){
   ]);
 }
 
+// 🧠 記住選擇
 async function scene7(){
-  await typeText("我有看到你剛剛的選擇");
+  await typeText("你剛剛選了「"+lastChoiceText+"」");
+  await new Promise(r=>setTimeout(r,1200));
+  await typeText("不要再亂選了");
+
   showChoices([
     {text:"你怎麼知道",next:scene8},
     {text:"巧合吧",next:scene8},
@@ -235,8 +270,9 @@ async function scene7(){
   ]);
 }
 
+// 👁 游標異常
 async function scene8(){
-  hideCursor();
+  glitchCursor();
   await typeText("這不是測驗，是篩選");
   showChoices([
     {text:"篩選什麼",next:scene9},
@@ -248,9 +284,10 @@ async function scene8(){
 // ⚡ 第二次嚇 + 污染
 async function scene9(){
   await typeText("畫面開始怪怪的？");
-  corruptText(2);
+  corruptText(1.5);
+  mutateText();
 
-  setTimeout(()=>flashJumpScare(),800);
+  setTimeout(()=>flashJumpScare(),1200);
 
   showChoices([
     {text:"有",next:scene10},
@@ -259,6 +296,7 @@ async function scene9(){
   ]);
 }
 
+// ⏳ 當機
 async function scene10(){
   await fakeFreeze();
   await typeText("如果你關掉這個頁面…會怎樣？");
@@ -270,22 +308,46 @@ async function scene10(){
   ]);
 }
 
-// ⚡ 最終
+// ☠️ 結尾
 async function ending(){
   choicesEl.innerHTML="";
   textEl.classList.add("glitch");
 
   await typeText("分析中...");
+  await new Promise(r=>setTimeout(r,2000));
+
+  await typeText("正在比對資料...");
+  await new Promise(r=>setTimeout(r,1800));
+
+  await typeText("已找到匹配對象");
 
   flashJumpScare();
 
-  await new Promise(r=>setTimeout(r,1200));
+  await typeText(playerName+"，你的結果是：");
+  await new Promise(r=>setTimeout(r,1500));
 
-  await typeText(playerName+"，結果已確定");
+  await typeText("『適合被持續觀察的人』");
+  await new Promise(r=>setTimeout(r,2000));
+
+  await typeText("這不是測驗");
+  await new Promise(r=>setTimeout(r,1500));
+
+  await typeText("從一開始就不是");
+  await new Promise(r=>setTimeout(r,2000));
+
+  await typeText("你是自己走進來的");
+  await new Promise(r=>setTimeout(r,2000));
 
   jumpScare();
 
-  await new Promise(r=>setTimeout(r,1000));
+  await new Promise(r=>setTimeout(r,1200));
+
+  await typeText(playerName+"...");
+  await new Promise(r=>setTimeout(r,1500));
+
+  await typeText("你已經離不開了");
+
+  await new Promise(r=>setTimeout(r,3000));
 
   await typeText("現在你永遠是我的了");
 }
