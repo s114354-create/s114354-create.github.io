@@ -2,33 +2,74 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>沉香辭世甲喵嗚嘻</title>
+<title>心理測驗</title>
 
 <style>
 body{
-  background:black;
-  color:#0f0;
+  margin:0;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:radial-gradient(circle,#000 40%,#010101 100%);
   font-family:monospace;
-  text-align:center;
-  padding:30px;
+  color:#0f0;
 }
 
+/* 主卡片 */
+#app{
+  width:420px;
+  padding:30px;
+  background:rgba(0,0,0,0.85);
+  border:1px solid #0f0;
+  box-shadow:0 0 25px rgba(0,255,0,0.2);
+  text-align:center;
+}
+
+/* 文字 */
 #text{
   font-size:20px;
-  margin:30px;
-  min-height:60px;
+  min-height:80px;
+  margin-bottom:20px;
+  line-height:1.6;
+  animation:fadeIn 0.4s;
 }
 
-button,input{
+/* 選項 */
+button{
+  display:block;
+  width:100%;
+  margin:8px 0;
+  padding:10px;
   background:black;
   color:#0f0;
   border:1px solid #0f0;
-  padding:10px;
-  margin:10px;
+  cursor:pointer;
+  transition:0.2s;
 }
 
+button:hover{
+  background:#002200;
+  box-shadow:0 0 8px #0f0;
+}
+
+button:active{
+  transform:scale(0.95);
+}
+
+/* 輸入 */
+input{
+  width:90%;
+  padding:10px;
+  margin:10px 0;
+  background:black;
+  color:#0f0;
+  border:1px solid #0f0;
+}
+
+/* glitch */
 .glitch{
-  animation:glitch 0.15s infinite;
+  animation:glitch 0.12s infinite;
 }
 
 @keyframes glitch{
@@ -36,13 +77,20 @@ button,input{
   50%{transform:translate(-1px,-1px);}
   100%{transform:translate(1px,-1px);}
 }
+
+@keyframes fadeIn{
+  from{opacity:0;}
+  to{opacity:1;}
+}
 </style>
 </head>
 
 <body>
 
-<div id="text"></div>
-<div id="choices"></div>
+<div id="app">
+  <div id="text"></div>
+  <div id="choices"></div>
+</div>
 
 <script>
 let textEl=document.getElementById("text");
@@ -52,21 +100,21 @@ let playerName="";
 let lastChoiceText="";
 
 // 🐢 打字
-async function typeText(text, baseSpeed=90){
+async function typeText(text, speed=80){
   textEl.innerText="";
   for(let i=0;i<text.length;i++){
     textEl.innerText+=text[i];
-    let randomDelay=Math.random()*120;
-    let extraDelay=/[，。！？…]/.test(text[i])?300:0;
-    await new Promise(r=>setTimeout(r, baseSpeed+randomDelay+extraDelay));
+    let delay=speed+Math.random()*100;
+    if(/[，。！？]/.test(text[i])) delay+=200;
+    await new Promise(r=>setTimeout(r,delay));
   }
 }
 
 async function typeName(name){
   textEl.innerText="";
-  for(let i=0;i<name.length;i++){
-    textEl.innerText+=name[i];
-    await new Promise(r=>setTimeout(r,200));
+  for(let c of name){
+    textEl.innerText+=c;
+    await new Promise(r=>setTimeout(r,180));
   }
 }
 
@@ -83,140 +131,70 @@ function showChoices(arr){
   });
 }
 
-// 💀 污染
-function corruptText(level=1){
-  let chars="█▓▒░<>/\\!?";
-  setInterval(()=>{
-    let t=textEl.innerText.split("");
-    for(let i=0;i<t.length;i++){
-      if(Math.random()<0.02*level){
-        t[i]=chars[Math.floor(Math.random()*chars.length)];
-      }
-    }
-    textEl.innerText=t.join("");
-  },120);
-}
-
-function mutateText(){
-  setInterval(()=>{
-    let t=textEl.innerText;
-    textEl.innerText=t.replace(/你/g,"我");
-  },1200);
-}
-
 // ⚡ 閃
 function flashJumpScare(){
-  let flash=document.createElement("div");
-  flash.style.position="fixed";
-  flash.style.top="0";
-  flash.style.left="0";
-  flash.style.width="100%";
-  flash.style.height="100%";
-  flash.style.display="flex";
-  flash.style.alignItems="center";
-  flash.style.justifyContent="center";
-  flash.style.fontSize="40px";
-  flash.style.fontWeight="bold";
-  flash.style.zIndex="9999";
+  let f=document.createElement("div");
+  f.style.position="fixed";
+  f.style.inset="0";
+  f.style.display="flex";
+  f.style.alignItems="center";
+  f.style.justifyContent="center";
+  f.style.fontSize="40px";
+  f.style.zIndex="9999";
+  document.body.appendChild(f);
 
-  document.body.appendChild(flash);
+  f.style.background="white";
+  f.innerText=playerName+"，不要回頭";
 
-  flash.style.background="white";
-  flash.style.color="black";
-  flash.innerText=playerName+"我一直都愛著你";
-
-  setTimeout(()=>{
-    flash.style.background="red";
-    flash.innerText="我一直在等你";
-  },180);
-
-  setTimeout(()=>{
-    flash.style.background="black";
-    flash.style.color="red";
-    flash.innerText="你逃不掉";
-  },360);
-
-  setTimeout(()=>{
-    flash.remove();
-  },650);
-}
-
-// 👁 游標
-function glitchCursor(){
-  setInterval(()=>{
-    document.body.style.cursor=Math.random()>0.5?"none":"default";
-  },250);
-}
-
-// ⏳ 假當機
-async function fakeFreeze(){
-  textEl.innerText="載入中.";
-  await new Promise(r=>setTimeout(r,800));
-  textEl.innerText="載入中..";
-  await new Promise(r=>setTimeout(r,800));
-  textEl.innerText="載入中...";
-  await new Promise(r=>setTimeout(r,2000));
-  textEl.innerText="錯誤";
-  await new Promise(r=>setTimeout(r,1000));
+  setTimeout(()=>{f.style.background="red";f.innerText="我一直在看你";},180);
+  setTimeout(()=>{f.style.background="black";f.style.color="red";f.innerText="你逃不掉";},360);
+  setTimeout(()=>f.remove(),650);
 }
 
 // 📺 雜訊
 function noiseScreen(){
-  let noise=document.createElement("div");
-  noise.style.position="fixed";
-  noise.style.top="0";
-  noise.style.left="0";
-  noise.style.width="100%";
-  noise.style.height="100%";
-  noise.style.background="black";
-  noise.style.color="#0f0";
-  noise.style.fontSize="10px";
-  noise.style.whiteSpace="pre-wrap";
-  noise.style.zIndex="9998";
-  document.body.appendChild(noise);
+  let n=document.createElement("div");
+  n.style.position="fixed";
+  n.style.inset="0";
+  n.style.background="black";
+  n.style.color="#0f0";
+  n.style.fontSize="10px";
+  n.style.whiteSpace="pre-wrap";
+  n.style.zIndex="9998";
+  document.body.appendChild(n);
 
   let chars="█▓▒░";
-  let interval=setInterval(()=>{
-    let content="";
-    for(let i=0;i<1000;i++){
-      content+=chars[Math.floor(Math.random()*chars.length)];
+  let i=setInterval(()=>{
+    let t="";
+    for(let k=0;k<900;k++){
+      t+=chars[Math.random()*chars.length|0];
     }
-    noise.innerText=content;
+    n.innerText=t;
   },50);
 
-  return {noise, interval};
+  return {n,i};
 }
 
 // ⚡ 大閃
 function bigFlash(){
-  let flash=document.createElement("div");
-  flash.style.position="fixed";
-  flash.style.top="0";
-  flash.style.left="0";
-  flash.style.width="100%";
-  flash.style.height="100%";
-  flash.style.background="white";
-  flash.style.zIndex="9999";
-  document.body.appendChild(flash);
-  setTimeout(()=>flash.remove(),150);
+  let f=document.createElement("div");
+  f.style.position="fixed";
+  f.style.inset="0";
+  f.style.background="white";
+  f.style.zIndex="9999";
+  document.body.appendChild(f);
+  setTimeout(()=>f.remove(),150);
 }
 
 // 🌑 黑屏
 function blackScreen(){
-  let black=document.createElement("div");
-  black.style.position="fixed";
-  black.style.top="0";
-  black.style.left="0";
-  black.style.width="100%";
-  black.style.height="100%";
-  black.style.background="black";
-  black.style.zIndex="9999";
-  document.body.appendChild(black);
-  return black;
-}
-
-function getTime(){
-  return new Date().toLocaleTimeString();
+  let b=document.createElement("div");
+  b.style.position="fixed";
+  b.style.inset="0";
+  b.style.background="black";
+  b.style.zIndex="9999";
+  document.body.appendChild(b);
+  return b;
 }
 
 // 🟢 開始
@@ -230,111 +208,38 @@ async function submitName(){
   choicesEl.innerHTML="";
 
   await typeText("正在讀取...");
-  await new Promise(r=>setTimeout(r,1000));
-
   await typeName(playerName);
-  await new Promise(r=>setTimeout(r,500));
-
-  await typeText(playerName+"，現在時間是 "+getTime());
+  await typeText(playerName+"，現在時間是 "+new Date().toLocaleTimeString());
 
   scene1();
 }
 
-// 🟢 流程
+// 🟢 流程（精簡）
 async function scene1(){
-  await typeText("你平常喜歡做什麼？");
+  await typeText("你現在，是一個人嗎？");
   showChoices([
-    {text:"滑手機",next:scene2},
-    {text:"睡覺",next:scene2},
-    {text:"發呆",next:scene2}
+    {text:"是",next:scene2},
+    {text:"不是",next:scene2},
+    {text:"不知道",next:scene2}
   ]);
 }
 
 async function scene2(){
-  await typeText("你相信巧合嗎？");
+  await typeText("你剛剛，有回頭看嗎？");
+  setTimeout(flashJumpScare,900);
   showChoices([
-    {text:"相信",next:scene3},
-    {text:"不信",next:scene3},
-    {text:"看情況",next:scene3}
+    {text:"沒有",next:scene3},
+    {text:"有",next:scene3},
+    {text:"為什麼問",next:scene3}
   ]);
 }
 
 async function scene3(){
-  await typeText("如果有人一直關注你，你會？");
-  showChoices([
-    {text:"開心",next:scene4},
-    {text:"不舒服",next:scene4},
-    {text:"無所謂",next:scene4}
-  ]);
-}
-
-async function scene4(){
-  await typeText("你有沒有覺得，手機會自己亮？");
-  showChoices([
-    {text:"沒有",next:scene5},
-    {text:"好像有",next:scene5},
-    {text:"常常",next:scene5}
-  ]);
-}
-
-async function scene5(){
-  await typeText("你現在，是一個人嗎？");
-  showChoices([
-    {text:"是",next:scene6},
-    {text:"不是",next:scene6},
-    {text:"不知道",next:scene6}
-  ]);
-}
-
-async function scene6(){
-  await typeText("你剛剛，有回頭看嗎？");
-  setTimeout(()=>flashJumpScare(),900);
-  showChoices([
-    {text:"沒有",next:scene7},
-    {text:"有",next:scene7},
-    {text:"為什麼問",next:scene7}
-  ]);
-}
-
-async function scene7(){
   await typeText("你剛剛選了「"+lastChoiceText+"」");
-  await typeText("不要再亂選了");
   showChoices([
-    {text:"你怎麼知道",next:scene8},
-    {text:"巧合吧",next:scene8},
-    {text:"……",next:scene8}
-  ]);
-}
-
-async function scene8(){
-  glitchCursor();
-  await typeText("這不是測驗，是篩選");
-  showChoices([
-    {text:"篩選什麼",next:scene9},
-    {text:"不好笑",next:scene9},
-    {text:"我要關掉",next:scene9}
-  ]);
-}
-
-async function scene9(){
-  await typeText("畫面開始怪怪的？");
-  corruptText(1.5);
-  mutateText();
-  setTimeout(()=>flashJumpScare(),1200);
-  showChoices([
-    {text:"有",next:scene10},
-    {text:"沒有",next:scene10},
-    {text:"停止",next:scene10}
-  ]);
-}
-
-async function scene10(){
-  await fakeFreeze();
-  await typeText("如果你關掉這個頁面…會怎樣？");
-  showChoices([
-    {text:"沒事",next:ending},
-    {text:"有點怕",next:ending},
-    {text:"你會跟來",next:ending}
+    {text:"你怎麼知道",next:ending},
+    {text:"巧合吧",next:ending},
+    {text:"……",next:ending}
   ]);
 }
 
@@ -344,54 +249,42 @@ async function ending(){
   textEl.classList.add("glitch");
 
   await typeText("分析中...");
-  await new Promise(r=>setTimeout(r,2000));
-
   await typeText("已找到匹配對象");
 
   flashJumpScare();
 
   await typeText(playerName+"，你的結果是：");
-  await typeText("『適合被我擁有的人』");
-
-  await new Promise(r=>setTimeout(r,1000));
+  await typeText("『適合被持續觀察的人』");
   await typeText("現在你永遠是我的了");
 
-  // 📺 雜訊
-  let {noise, interval} = noiseScreen();
+  let {n,i}=noiseScreen();
   await new Promise(r=>setTimeout(r,1500));
 
-  // ⚡ 大閃
   bigFlash();
-  clearInterval(interval);
-  noise.remove();
+  clearInterval(i);
+  n.remove();
 
-  // 🌑 黑屏
-  let black = blackScreen();
+  let black=blackScreen();
 
-  // ⏳ 完全靜止
   await new Promise(r=>setTimeout(r,5000));
 
-  // 👁 黑畫面文字
-  let whisper=document.createElement("div");
-  whisper.style.position="fixed";
-  whisper.style.top="50%";
-  whisper.style.left="50%";
-  whisper.style.transform="translate(-50%,-50%)";
-  whisper.style.color="white";
-  whisper.style.fontSize="22px";
-  whisper.style.zIndex="10000";
-  whisper.style.fontFamily="monospace";
-  whisper.innerText="你還在看嗎？";
-  document.body.appendChild(whisper);
+  let w=document.createElement("div");
+  w.style.position="fixed";
+  w.style.top="50%";
+  w.style.left="50%";
+  w.style.transform="translate(-50%,-50%)";
+  w.style.color="white";
+  w.style.fontSize="22px";
+  w.style.zIndex="10000";
+  w.innerText="你還在看嗎？";
+  document.body.appendChild(w);
 
   await new Promise(r=>setTimeout(r,2500));
-
-  whisper.innerText="";
+  w.innerText="";
   await new Promise(r=>setTimeout(r,1500));
 
-  // 🧊 收尾
   black.remove();
-  whisper.remove();
+  w.remove();
 
   textEl.classList.remove("glitch");
   textEl.innerText="";
